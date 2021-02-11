@@ -30,11 +30,17 @@ import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.github.instagram4j.instagram4j.responses.media.RuploadPhotoResponse;
 
 public class UploadAlbumTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UploadAlbumTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void uploadTest()
             throws IGLoginException, IOException, IGResponseException, ClassNotFoundException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File firstPhoto = new File("src/main/resources/test.jpg"),
                 secondVideo = new File("src/main/resources/test.mp4"),
                 thumb = new File("src/main/resources/cover.jpg");

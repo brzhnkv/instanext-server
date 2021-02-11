@@ -6,20 +6,22 @@ import java.util.concurrent.Callable;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.IGClient.Builder.LoginHandler;
 import com.github.instagram4j.instagram4j.utils.IGChallengeUtils;
 
-import junitparams.FileParameters;
-import junitparams.JUnitParamsRunner;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
 
-@RunWith(JUnitParamsRunner.class)
+
 public class ChallengeLoginTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public ChallengeLoginTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
-    @FileParameters("src/main/resources/login.csv")
     public void testChallengeLogin(String username, String password) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
@@ -39,7 +41,7 @@ public class ChallengeLoginTest {
         IGClient client = IGClient.builder()
                 .username(username)
                 .password(password)
-                .client(SerializeTestUtil.formTestHttpClient())
+                .client(serializeTestUtil.formTestHttpClient())
                 .onChallenge(challengeHandler)
                 .login();
 

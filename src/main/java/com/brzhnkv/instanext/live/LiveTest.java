@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Test;
 
 import com.github.instagram4j.instagram4j.IGClient;
@@ -26,15 +27,24 @@ import com.github.instagram4j.instagram4j.responses.live.LiveCreateResponse;
 
 import lombok.extern.slf4j.Slf4j;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class LiveTest {
+    public Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public LiveTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void test()
             throws IGLoginException, IGResponseException, ClassNotFoundException,
             FileNotFoundException, IOException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         LiveCreateRequest liveCreate = new LiveCreateRequest();
         LiveStartRequest liveStart;
         LiveCreateResponse createResponse = client.sendRequest(liveCreate).join();
@@ -55,15 +65,15 @@ public class LiveTest {
             try {
                 switch (input.split(" ")[0]) {
                     default:
-                        log.info("Unknown. Type 'end' to end.");
+                        logger.info("Unknown. Type 'end' to end.");
                         break;
                     case "viewers":
                         LiveBroadcastGetViewerListRequest vrequest =
                                 new LiveBroadcastGetViewerListRequest(id);
                         LiveBroadcastGetViewerListResponse vresponse =
                                 vrequest.execute(client).join();
-                        log.info("Viewers List ({})", vresponse.getUsers().size());
-                        vresponse.getUsers().forEach(profile -> log.info("{} ({})",
+                        logger.info("Viewers List ({})", vresponse.getUsers().size());
+                        vresponse.getUsers().forEach(profile -> logger.info("{} ({})",
                                 profile.getUsername(), profile.getPk()));
                         break;
                     case "comments":
@@ -83,7 +93,7 @@ public class LiveTest {
                                 new LiveBroadcastGetLikeCountRequest(id, like_ts);
                         LiveBroadcastGetLikeCountResponse lResponse =
                                 lrequest.execute(client).join();
-                        log.info("Total likes : {}", lResponse.getLikes());
+                        logger.info("Total likes : {}", lResponse.getLikes());
                         like_ts = lResponse.getLike_ts();
                         break;
                     case "activate":

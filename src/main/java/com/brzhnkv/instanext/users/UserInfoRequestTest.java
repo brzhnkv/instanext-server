@@ -16,12 +16,18 @@ import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
 
 public class UserInfoRequestTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UserInfoRequestTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testLogin()
             throws IGLoginException, IGResponseException, ClassNotFoundException,
             FileNotFoundException, IOException {
-        IGClient lib = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient lib = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         UsersUsernameInfoRequest req = new UsersUsernameInfoRequest("seattlegoldgrills");
         UsersInfoRequest req2 = new UsersInfoRequest(18428658l);
         IGResponse response = lib.sendRequest(req).join(), res = lib.sendRequest(req2).join();

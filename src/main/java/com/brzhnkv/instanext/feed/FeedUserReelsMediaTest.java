@@ -14,12 +14,18 @@ import com.github.instagram4j.instagram4j.requests.feed.FeedUserReelMediaRequest
 import com.github.instagram4j.instagram4j.responses.IGResponse;
 
 public class FeedUserReelsMediaTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public FeedUserReelsMediaTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testFeedRequest()
             throws IGResponseException, IGLoginException, ClassNotFoundException,
             FileNotFoundException, IOException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         FeedUserReelMediaRequest req = new FeedUserReelMediaRequest(18428658l);
 
         IGResponse response = client.sendRequest(req).join();

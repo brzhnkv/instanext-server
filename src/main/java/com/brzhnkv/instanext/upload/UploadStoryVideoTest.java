@@ -7,9 +7,9 @@ import java.nio.file.Files;
 
 import javax.imageio.ImageIO;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
 import com.github.instagram4j.instagram4j.IGClient;
@@ -24,17 +24,26 @@ import com.github.instagram4j.instagram4j.requests.upload.RuploadVideoRequest;
 import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.github.instagram4j.instagram4j.responses.media.MediaResponse.MediaConfigureToStoryResponse;
 
-import junitparams.JUnitParamsRunner;
-import lombok.extern.slf4j.Slf4j;
 
-@RunWith(JUnitParamsRunner.class)
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 @Slf4j
 public class UploadStoryVideoTest {
+    public Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UploadStoryVideoTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void uploadTest()
             throws IGLoginException, IOException, IGResponseException, ClassNotFoundException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File vidFile = new File("src/main/resources/storyvid.mp4"),
                 covFile = new File("src/main/resources/story.jpg");
         byte[] vidData = Files.readAllBytes(vidFile.toPath()),
@@ -59,7 +68,7 @@ public class UploadStoryVideoTest {
 
         MediaConfigureToStoryResponse response = client.sendRequest(configReq).join();
 
-        log.debug(response.getMedia().getClass().toString());
+        logger.debug(response.getMedia().getClass().toString());
         Assert.assertEquals("ok", response.getStatus());
     }
 }

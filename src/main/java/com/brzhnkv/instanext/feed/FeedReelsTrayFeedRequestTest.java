@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,15 +19,24 @@ import com.github.instagram4j.instagram4j.utils.IGUtils;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class FeedReelsTrayFeedRequestTest {
+    public Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public FeedReelsTrayFeedRequestTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testFeedRequest()
             throws IGResponseException, IGLoginException, ClassNotFoundException,
             FileNotFoundException, IOException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         FeedReelsTrayResponse response = client.actions().story().tray().join();
         Assert.assertEquals("ok", response.getStatus());
 
@@ -34,7 +44,7 @@ public class FeedReelsTrayFeedRequestTest {
          * response.getTray().forEach(tray -> { tray.getItems().stream() .map(x ->
          * x.get("story_cta")) .filter(Objects::nonNull) .forEach(story_cta -> { ArrayNode node =
          * IGUtils.convertToView(story_cta, ArrayNode.class);
-         * log.info(node.get(0).get("links").get(0).get("webUri").asText()); }); });
+         * logger.info(node.get(0).get("links").get(0).get("webUri").asText()); }); });
          */
 
         response.getTray().forEach(tray -> {
@@ -43,7 +53,7 @@ public class FeedReelsTrayFeedRequestTest {
                     .filter(Objects::nonNull)
                     .flatMap(story_cta -> StoryCta.convert(story_cta).stream())
                     .forEach(item -> {
-                        log.debug(item.getLinks().get(0).getWebUri());
+                        logger.debug(item.links.get(0).webUri);
                     });
         });
     }

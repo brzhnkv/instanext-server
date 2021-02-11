@@ -22,11 +22,17 @@ import com.github.instagram4j.instagram4j.responses.media.MediaResponse.MediaCon
 import com.github.instagram4j.instagram4j.responses.media.RuploadPhotoResponse;
 
 public class UploadPhotoTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UploadPhotoTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void uploadTest()
             throws IGLoginException, IOException, IGResponseException, ClassNotFoundException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File file = new File("src/main/resources/4to5ratio.jpg");
         byte[] imgData = Files.readAllBytes(file.toPath());
         IGRequest<RuploadPhotoResponse> uploadReq = new RuploadPhotoRequest(imgData, "1");

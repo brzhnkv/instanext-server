@@ -1,105 +1,134 @@
 package com.brzhnkv.instanext.serialize;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
+import com.brzhnkv.instanext.Main;
+import com.brzhnkv.instanext.client.Client;
+import com.brzhnkv.instanext.client.ClientService;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException;
 import com.github.instagram4j.instagram4j.exceptions.IGResponseException;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
 
-import junitparams.FileParameters;
-import junitparams.JUnitParamsRunner;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.stereotype.Service;
 
-@RunWith(JUnitParamsRunner.class)
-@Slf4j
+
+@Service
 public class SerializeTestUtil {
-    @Test
-    @FileParameters("src/main/resources/login.csv")
-    public void serializeLogin(String username, String password)
-            throws IGLoginException, IGResponseException, ClassNotFoundException,
-            FileNotFoundException, IOException {
-        File to = new File("src/main/resources/igclient.ser"),
-                cookFile = new File("src/main/resources/cookie.ser");
+
+    public static Logger logger = LoggerFactory.getLogger(Main.class);
+    private final ClientService clientService;
+
+    public SerializeTestUtil(ClientService clientService) {
+        this.clientService = clientService;
+    }
+
+
+    public String serializeLogin(String username, String password)
+            throws ClassNotFoundException, IOException {
+
         SerializableCookieJar jar = new SerializableCookieJar();
         IGClient lib = new IGClient.Builder().username(username).password(password)
                 .client(formTestHttpClient(jar))
                 .onLogin((cli, lr) -> Assert.assertEquals("ok", lr.getStatus()))
                 .login();
-        log.debug("Serializing. . .");
-        serialize(lib, to);
-        serialize(jar, cookFile);
-        log.debug("Deserializing. . .");
-        IGClient saved = IGClient.from(new FileInputStream(to),
-                formTestHttpClient(deserialize(cookFile, SerializableCookieJar.class)));
-        log.debug(lib.toString());
-        log.debug(saved.toString());
-        Assert.assertTrue(saved.equals(lib));
+        logger.info("Serializing. . .");
+        String token = lib.getCsrfToken();
+        serialize(lib, jar, username, token);
 
+        ByteArrayInputStream clientFile = new ByteArrayInputStream(clientService
+                .getClientByUsernameAndToken(username, token)
+                .get()
+                .getClientFile());
+        ByteArrayInputStream cookieFile = new ByteArrayInputStream(clientService
+                .getClientByUsernameAndToken(username, token)
+                .get()
+                .getCookieFile());
+
+        IGClient saved = IGClient.from(clientFile,
+                formTestHttpClient(deserialize(cookieFile, SerializableCookieJar.class)));
+        logger.info(saved.toString());
+
+        Assert.assertEquals(saved, lib);
+
+        return token;
     }
 
-    // logging intercepter
-    private static final HttpLoggingInterceptor loggingInterceptor =
+    // logging interceptor
+    private final HttpLoggingInterceptor loggingInterceptor =
             new HttpLoggingInterceptor((msg) -> {
-                log.debug(msg);
+                logger.debug(msg);
             }).setLevel(Level.BODY);
 
-    public static IGClient getClientFromSerialize(String clientFile, String cookieFile)
+    public IGClient getClientFromSerialize(String username, String token)
             throws ClassNotFoundException, FileNotFoundException, IOException {
-        File to = new File("src/main/resources/" + clientFile),
-                cookFile = new File("src/main/resources/" + cookieFile);
-        InputStream fileIn = new FileInputStream(to);
-        IGClient client = IGClient.from(fileIn,
-                formTestHttpClient(deserialize(cookFile, SerializableCookieJar.class)));
-        fileIn.close();
+
+        ByteArrayInputStream clientFile = new ByteArrayInputStream(clientService
+                .getClientByUsernameAndToken(username, token)
+                .get()
+                .getClientFile());
+        ByteArrayInputStream cookieFile = new ByteArrayInputStream(clientService
+                .getClientByUsernameAndToken(username, token)
+                .get()
+                .getCookieFile());
+
+        IGClient client = IGClient.from(clientFile,
+                formTestHttpClient(deserialize(cookieFile, SerializableCookieJar.class)));
 
         return client;
     }
 
-    @SneakyThrows
-    public static void serialize(Object o, File to) {
-        FileOutputStream file = new FileOutputStream(to);
-        ObjectOutputStream out = new ObjectOutputStream(file);
 
-        out.writeObject(o);
-        out.close();
-        file.close();
+    public void serialize(Object lib, Object jar, String username, String token) throws IOException {
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(outputStream);
+        os.writeObject(lib);
+        byte[] clientFileBytes = outputStream.toByteArray();
+
+        ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
+        ObjectOutputStream os2 = new ObjectOutputStream(outputStream2);
+        os2.writeObject(jar);
+        byte[] cookieFileBytes = outputStream2.toByteArray();
+
+        clientService.addNewClient(new Client(username, token, clientFileBytes, cookieFileBytes));
+
+        outputStream.close();
+        os.close();
+
+        outputStream2.close();
+        os2.close();
     }
 
-    @SneakyThrows
-    public static <T> T deserialize(File file, Class<T> clazz) {
-        InputStream in = new FileInputStream(file);
-        ObjectInputStream oIn = new ObjectInputStream(in);
+
+    public <T> T deserialize(InputStream inputStream, Class<T> clazz) throws IOException, ClassNotFoundException {
+
+        ObjectInputStream oIn = new ObjectInputStream(inputStream);
 
         T t = clazz.cast(oIn.readObject());
 
-        in.close();
+        inputStream.close();
         oIn.close();
 
         return t;
     }
 
-    public static OkHttpClient formTestHttpClient() {
+    public OkHttpClient formTestHttpClient() {
         return IGUtils.defaultHttpClientBuilder().addInterceptor(loggingInterceptor)
                 .build();
     }
 
-    public static OkHttpClient formTestHttpClient(SerializableCookieJar jar) {
+    public OkHttpClient formTestHttpClient(SerializableCookieJar jar) {
         return IGUtils.defaultHttpClientBuilder().cookieJar(jar)
                 .addInterceptor(loggingInterceptor).build();
     }

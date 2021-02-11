@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Test;
 
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
@@ -18,13 +19,22 @@ import com.github.instagram4j.instagram4j.requests.upload.RuploadSegmentVideoPha
 import com.github.instagram4j.instagram4j.responses.IGResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class UploadToIgtvTest {
+    public static Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UploadToIgtvTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testName() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File videoFile = new File("src/main/resources/igtvvid.mp4"),
                 cover = new File("src/main/resources/igtvcover.jpg");
         String upload_id = String.valueOf(System.currentTimeMillis());
@@ -38,19 +48,19 @@ public class UploadToIgtvTest {
                     new MediaConfigureToIgtvRequest(upload_id, "Goober", "Wow!");
             IGResponse response = config.execute(client).join();
             if (response.getStatus().equals("fail")) {
-                log.debug("waiting");
+                logger.debug("waiting");
                 Thread.sleep(1000 * 10 * (i + 1));
             } else {
                 i = 4;
             }
         } while (i++ < 3);
-        log.debug("{}", i >= 3 ? "Success" : "fail");
+        logger.debug("{}", i >= 3 ? "Success" : "fail");
     }
     
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testAction() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File videoFile = new File("src/examples/resources/igtvvid.mp4"),
                 cover = new File("src/examples/resources/igtvcover.jpg");
         byte[] data = Files.readAllBytes(videoFile.toPath()), coverData = Files.readAllBytes(cover.toPath());
@@ -74,9 +84,9 @@ public class UploadToIgtvTest {
             RuploadSegmentVideoPhaseRequest transfer =
                     new RuploadSegmentVideoPhaseRequest(Phase.TRANSFER, parameter, stream_id,
                             transfer_id, offset, String.valueOf(totalLength), segments[i]);
-            log.debug("Uploading: {} of {}", i + 1 + "", segments.length + "");
+            logger.debug("Uploading: {} of {}", i + 1 + "", segments.length + "");
             transfer.execute(client).join();
-            log.debug("Done {}", i + "");
+            logger.debug("Done {}", i + "");
         }
 
         end = new RuploadSegmentVideoPhaseRequest(Phase.END, parameter, stream_id, transfer_id);

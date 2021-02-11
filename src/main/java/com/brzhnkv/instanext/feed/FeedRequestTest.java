@@ -3,6 +3,7 @@ package com.brzhnkv.instanext.feed;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Test;
 
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
@@ -14,15 +15,24 @@ import com.github.instagram4j.instagram4j.models.media.timeline.TimelineImageMed
 import com.github.instagram4j.instagram4j.requests.feed.FeedTimelineRequest;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class FeedRequestTest {
+    public Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public FeedRequestTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testFeedRequest()
             throws IGResponseException, IGLoginException, ClassNotFoundException,
             FileNotFoundException, IOException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         
         new FeedTimelineRequest().execute(client)
         .thenAccept(res -> {
@@ -39,8 +49,8 @@ public class FeedRequestTest {
         .forEach(res -> {
             FeedItems.filter(res.getFeed_items(), TimelineImageMedia.class)
             .forEach(image -> {
-                log.info(image.getMedia_type());
-                log.info("Download link : {}", image.getImage_versions2().getCandidates().get(0).getUrl());
+                logger.info(image.getMedia_type());
+                logger.info("Download link : {}", image.getImage_versions2().getCandidates().get(0).getUrl());
             });
         });
     }

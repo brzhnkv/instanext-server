@@ -25,11 +25,17 @@ import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.github.instagram4j.instagram4j.responses.media.MediaResponse.MediaConfigureTimelineResponse;
 
 public class UploadVideoTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UploadVideoTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void uploadTest()
             throws IGLoginException, IOException, IGResponseException, ClassNotFoundException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File videoFile = new File("src/main/resources/test.mp4");
         File thumbnail = new File("src/main/resources/test.jpg");
         byte[] videoData = Files.readAllBytes(videoFile.toPath());

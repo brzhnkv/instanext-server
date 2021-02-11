@@ -3,11 +3,12 @@ package com.brzhnkv.instanext;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class NotificationDispatcher {
+	public Logger logger = LoggerFactory.getLogger(Main.class);
 	private Set<String> listeners = new HashSet<>();
 	private SimpMessagingTemplate template;
 	public NotificationDispatcher(SimpMessagingTemplate template) {
@@ -33,7 +35,7 @@ public class NotificationDispatcher {
 	    //@Scheduled(fixedDelay = 10000)
 	    public void dispatch(Notification notification, String path) {
 	        for (String listener : listeners) {
-	            log.info("Sending notification to " + listener);
+	            logger.info("Sending notification to " + listener);
 
 	            SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
 	            headerAccessor.setSessionId(listener);
@@ -52,7 +54,7 @@ public class NotificationDispatcher {
 	    @EventListener
 	    public void sessionDisconnectionHandler(SessionDisconnectEvent event) {
 	        String sessionId = event.getSessionId();
-	        log.info("Disconnecting " + sessionId + "!");
+	        logger.info("Disconnecting " + sessionId + "!");
 	        remove(sessionId);
 	    }
 }

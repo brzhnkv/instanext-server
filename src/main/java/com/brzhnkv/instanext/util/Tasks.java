@@ -1,138 +1,179 @@
 package com.brzhnkv.instanext.util;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.brzhnkv.instanext.*;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.brzhnkv.instanext.Notification;
-import com.brzhnkv.instanext.NotificationDispatcher;
-import com.brzhnkv.instanext.direct.DirectThreadBroadcastTest;
+import com.brzhnkv.instanext.client.ClientService;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
 import com.github.instagram4j.instagram4j.IGClient;
-import com.github.instagram4j.instagram4j.actions.feed.FeedIterable;
 import com.github.instagram4j.instagram4j.actions.feed.FeedIterator;
-import com.github.instagram4j.instagram4j.actions.users.UserAction;
-import com.github.instagram4j.instagram4j.models.IGBaseModel;
 import com.github.instagram4j.instagram4j.models.user.Profile;
-import com.github.instagram4j.instagram4j.requests.direct.DirectInboxRequest;
 import com.github.instagram4j.instagram4j.requests.direct.DirectThreadsBroadcastRequest;
 import com.github.instagram4j.instagram4j.requests.direct.DirectThreadsBroadcastRequest.BroadcastMediaSharePayload;
 import com.github.instagram4j.instagram4j.requests.feed.FeedTagRequest;
-import com.github.instagram4j.instagram4j.requests.users.UsersUsernameInfoRequest;
 import com.github.instagram4j.instagram4j.responses.IGResponse;
-import com.github.instagram4j.instagram4j.responses.direct.DirectInboxResponse;
 import com.github.instagram4j.instagram4j.responses.feed.FeedTagResponse;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
-
-import ch.qos.logback.core.joran.action.Action;
-
-import org.junit.Assert;
-import com.github.instagram4j.instagram4j.responses.feed.FeedUsersResponse;
-import com.github.instagram4j.instagram4j.requests.feed.FeedUserRequest;
-
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
+@Service
 public class Tasks {
 
+	public Logger logger = LoggerFactory.getLogger(Main.class);
+
 	private final NotificationDispatcher dispatcher;
+	private final ClientService clientService;
+	private final SerializeTestUtil serializeTestUtil;
+
 	private int postsAlreadyLikedCount;
 	private int postsLikedCount;
 	private int postsSavedCount;
 	private int postsSent;
 
+	private String username;
+	private String token;
+
 	@Autowired
-	public Tasks(NotificationDispatcher dispatcher) {
+	public Tasks(NotificationDispatcher dispatcher, ClientService clientService, SerializeTestUtil serializeTestUtil) {
+		this.serializeTestUtil = serializeTestUtil;
+		this.clientService = clientService;
 		this.dispatcher = dispatcher;
 		this.postsAlreadyLikedCount = 0;
 		this.postsLikedCount = 0;
 		this.postsSavedCount = 0;
 		this.postsSent = 0;
+		this.username = "galinabraz";
+		this.token = "lTj9agKZKUXu81ad4cIEYgNWtBAR9hnq";
 	}
 
-	public void test() throws Exception {
-		IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+	public NotificationDispatcher getDispatcher() {
+		return dispatcher;
+	}
 
-		String username = "bowsmaker";// pk 14175586339
+	public void authSession(String username, String token) throws Exception {
+		IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+
+
+		String profile_pic_url = client.getSelfProfile().getProfile_pic_url();
+		logger.info(client.getCsrfToken());
+
+		HashMap<String, String> data = new HashMap<String, String>();
+		//data.put("username", username);
+		data.put("userProfilePic", profile_pic_url);
+		//data.put("token", token);
+		dispatcher.dispatch(new Notification(data), "auth");
+	}
+
+	public void authLogin(String username, String password) throws Exception {
+		logger.info(username);
+		logger.info(password);
+		String token = serializeTestUtil.serializeLogin(username, password);
+
+		IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 		String profile_pic_url = client.getSelfProfile().getProfile_pic_url();
 
+		HashMap<String, String> data = new HashMap<String, String>();
+		data.put("username", username);
+		data.put("token", token);
+		data.put("userProfilePic", profile_pic_url);
+		dispatcher.dispatch(new Notification(data), "login");
+
+		//authSession(username, token);
+	}
+
+
+	public void test() throws Exception {
+		//IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+
+		dispatcher.dispatch(new Notification("Задание выполняется."), "status");
+
+
+
+/*
+		List<ResponseFile> files = storageService.getAllFiles().map(dbFile -> {
+			String fileDownloadUri = ServletUriComponentsBuilder
+					.fromCurrentContextPath()
+					.path("/files/")
+					.path(dbFile.getId())
+					.toUriString();
+
+			return new ResponseFile(
+					dbFile.getName(),
+					fileDownloadUri,
+					dbFile.getType(),
+					dbFile.getData().length);
+		}).collect(Collectors.toList());*/
+/*
+		IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+		String token = client.getCsrfToken();
+
+
+		logger.info("Token: " + token);
+		// wQPPePHdZiqX78WR4aMmb7sMlvrfifTn*/
+
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		dispatcher.dispatch(new Notification("ss"), "status");
+	}
+
+	public void getAllFollowers() throws Exception {
+		IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+
+		String username = "bowsmaker";
 		
-		
-	
 		final List<Profile> result = client.actions().users().findByUsername(username)
-                .thenApply(userAction -> userAction.followersFeed().stream()
-                        .flatMap(feedUsersResponse -> feedUsersResponse.getUsers().stream()).collect(Collectors.toList())
-                ).join();
-		
+				.thenApply(userAction -> userAction.followersFeed().stream()
+						.flatMap(feedUsersResponse -> feedUsersResponse.getUsers().stream()).collect(Collectors.toList())
+						).join();
+
 		BufferedWriter out = new BufferedWriter(new FileWriter("src/main/resources/followers.csv", true));
 		result.forEach(user -> {
 			String u = user.getUsername();
 			try {
-				  out.write(u);
-				  out.newLine(); 
-			  } catch (IOException e) {
-				  System.out.println("exception occured" + e); 
-			  }
-			  		  
-			  String actionLog = "Пользователь добавлен в файл: " + u;
-			  dispatcher.dispatch(new Notification(actionLog), "status");
+				out.write(u);
+				out.newLine(); 
+			} catch (IOException e) {
+				logger.info("exception occured" + e);
+			}
+
+			String actionLog = "Пользователь добавлен в файл: " + u;
+			dispatcher.dispatch(new Notification(actionLog), "status");
 		});
 		out.close();
-		
-		/*
-		 * while (followersResult == null || maxId != null) { try { followersResult =
-		 * instagram.sendRequest(new InstagramGetUserFollowersRequest(user_pk,maxId));
-		 * if (followersResult != null) { if (followersResult.getStatus().equals("ok"))
-		 * { maxId = followersResult.getNext_max_id();
-		 * followers.addAll(followersResult.getUsers()); }else{ break; } } } catch
-		 * (IOException e) { Thread.sleep(5000); } }
-		 */
-		
-//		  List<FeedUsersResponse> followers = new ArrayList<>(); while
-//		  (response.getNext_max_id() != null) {
-//		  
-//		  response.getUsers().forEach(user -> { 
-//			  String u = user.getUsername();
-//		  
-//		  
-//		  
-//		  try { Thread.sleep(3000); } catch (InterruptedException e) {
-//		  e.printStackTrace(); }
-//		  
-//		  }); response = iter.next(); // Recommended to wait in between iterations
-//		  Thread.sleep(5000); }
-//		 
-
-		// String followings_count =
-		// String.valueOf(client.actions().account().currentUser().join().getUser().getFollowing_count());
-		// String followers_count =
-		// String.valueOf(client.actions().account().currentUser().get().getUser().getFollower_count());
-
-		dispatcher.dispatch(new Notification(username), "status");
-		dispatcher.dispatch(new Notification(""), "status");
-//		  dispatcher.dispatch(new Notification(profile_pic_url), "status");
-//		  dispatcher.dispatch(new Notification(followings_count), "status");
-//		  dispatcher.dispatch(new Notification(followers_count), "status");
 
 	}
-
+	
+	
 	public void sendMediaToGroup(String tag) throws Exception {
-		IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
 
+
+		IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+
+		dispatcher.dispatch(new Notification("Задание выполняется."), "status");
 		String base_url = "https://www.instagram.com/p/";
 		String thread_id = "340282366841710300949128130629108875237";
 
-		FeedIterator<FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
+		FeedIterator<FeedTagRequest, FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
 		FeedTagResponse response = null;
 		while (iter.hasNext()) {
 			response = iter.next();
-			IGClient client2 = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+			IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
 			// Actions here
 			response.getItems().forEach(post -> {
 				String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
@@ -142,7 +183,7 @@ public class Tasks {
 				Assert.assertEquals("ok", response_thread.getStatus());
 				postsSent++;
 				String actionLog = "Пост отправлен в группу: " + url_code;
-				dispatcher.dispatch(new Notification(actionLog), "status");
+				dispatcher.dispatch(new Notification(actionLog), "log");
 				try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e) {
@@ -150,58 +191,69 @@ public class Tasks {
 				}
 			});
 			// Recommended to wait in between iterations
-			Thread.sleep(5000);
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		String log_info = "Всего публикаций отправлено: " + postsSent;
 		dispatcher.dispatch(new Notification(log_info), "status");
-		log_info = "Задание выполнено!";
+		log_info = "Задание выполнено!" + " Публикаций отправлено: " + postsSent;
 		dispatcher.dispatch(new Notification(log_info), "status");
 	}
 
 	public void likeAndSave(String tag) throws Exception {
-		IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+		IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
-		dispatcher.dispatch(new Notification("Задание Выполняется."), "status");
+		dispatcher.dispatch(new Notification("Задание выполняется."), "status");
 
 		String base_url = "https://www.instagram.com/p/";
-		// form a FeedIterator for FeedTagRequest
-		FeedIterator<FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
-		FeedTagResponse response = null;
-		while (iter.hasNext()) {
-			IGClient client2 = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
-			response = iter.next();
-			// Actions here
-			response.getItems().forEach(post -> {
-				String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
-				if (!post.isHas_liked()) {
-					Utility.likePost(client2, post);
-					postsLikedCount++;
-					Utility.savePost(client2, post);
-					String likedLog = "Лайк поставлен / пост сохранён: " + url_code;
-					dispatcher.dispatch(new Notification(likedLog), "status");
-					postsSavedCount++;
-					try {
-						Thread.sleep(3000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+
+		for (int i = 0; i < 1; i++) {
+			// form a FeedIterator for FeedTagRequest
+			FeedIterator<FeedTagRequest, FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
+			FeedTagResponse response = null;
+			while (iter.hasNext()) {
+				IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
+				response = iter.next();
+				// Actions here
+				response.getItems().forEach(post -> {
+					String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
+					if (!post.isHas_liked()) {
+						Utility.likePost(client2, post);
+						postsLikedCount++;
+						Utility.savePost(client2, post);
+						String likedLog = "Лайк поставлен / пост сохранён: " + url_code;
+						dispatcher.dispatch(new Notification(likedLog), "log");
+						postsSavedCount++;
+						try {
+							Thread.sleep(2000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					} else {
+						postsAlreadyLikedCount++;
+						String skipped_like_log = "Лайк уже стоит, пропускаю: " + url_code;
+						dispatcher.dispatch(new Notification(skipped_like_log), "log");
 					}
-				} else {
-					postsAlreadyLikedCount++;
-					String skipped_like_log = "Лайк уже стоит, пропускаю: " + url_code;
-					dispatcher.dispatch(new Notification(skipped_like_log), "status");
+				});
+				// Recommended to wait in between iterations
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-			});
-			// Recommended to wait in between iterations
-			Thread.sleep(5000);
-			
+
+			}
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
 		String logInfo = "Постов с лайками до начала работы задания: " + postsAlreadyLikedCount;
 		dispatcher.dispatch(new Notification(logInfo), "status");
 		logInfo = "Лайков поставлено: " + postsLikedCount;
@@ -210,12 +262,12 @@ public class Tasks {
 
 		logInfo = "Всего публикаций: " + total_posts;
 		dispatcher.dispatch(new Notification(logInfo), "status");
-		logInfo = "Задание выполнено!";
+		logInfo = "Задание выполнено!" + " Лайков поставлено: " + postsLikedCount;
 		dispatcher.dispatch(new Notification(logInfo), "status");
 
-		log.info("Постов с лайками до начала работы задания: {}", postsAlreadyLikedCount);
-		log.info("Лайков поставлено: {}", postsLikedCount);
-		log.info("Всего публикаций: {}", postsLikedCount + postsAlreadyLikedCount);
-		log.info("Задание выполнено!");
+		logger.info("Постов с лайками до начала работы задания: {}", postsAlreadyLikedCount);
+		logger.info("Лайков поставлено: {}", postsLikedCount);
+		logger.info("Всего публикаций: {}", postsLikedCount + postsAlreadyLikedCount);
+		logger.info("Задание выполнено!");
 	}
 }

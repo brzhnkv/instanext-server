@@ -33,11 +33,17 @@ import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
 
 public class DirectThreadBroadcastTest {
+    private final SerializeTestUtil serializeTestUtil;
+
+    public DirectThreadBroadcastTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testSeen()
             throws IGLoginException, IGResponseException, IOException, ClassNotFoundException {
-        IGClient lib = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient lib = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse res = new DirectThreadsMarkItemSeenRequest("29390877766756105082649519748808704",
                 thread_id).execute(lib).join();
@@ -47,7 +53,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testText() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse response = new DirectThreadsBroadcastRequest(
                 new BroadcastTextPayload("Test https://google.com", thread_id)).execute(client)
@@ -58,7 +64,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testProfile() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse response =
                 new DirectThreadsBroadcastRequest(new BroadcastProfilePayload("18428658", thread_id,
@@ -69,7 +75,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testMediaShare() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse response = new DirectThreadsBroadcastRequest(
                 new BroadcastMediaSharePayload("2336729204844097508_18428658", "test", thread_id,
@@ -80,7 +86,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testReelShare() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse response = new DirectThreadsBroadcastRequest(
                 new BroadcastReelSharePayload("2343253215272024058_18428658", "test", thread_id))
@@ -91,7 +97,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testStoryShare() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse response = new DirectThreadsBroadcastRequest(
                 new BroadcastStorySharePayload("2343253215272024058_18428658", "test", thread_id))
@@ -102,7 +108,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testUploadPhoto() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         File photo = new File("src/examples/resources/cover.jpg");
         byte[] photoData = Files.readAllBytes(photo.toPath());
@@ -117,7 +123,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testUploadVideo() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         File video = new File("src/examples/resources/test.mp4"),
                 cover = new File("src/examples/resources/cover.jpg");
@@ -135,7 +141,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testUploadVoice() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         String id = String.valueOf(System.currentTimeMillis());
         File voice = new File("src/examples/resources/01-replay.m4a");
@@ -151,7 +157,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testLink() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128163165245788989"; // "340282366841710300949128198037200507384";
         IGResponse response = new DirectThreadsBroadcastRequest(new BroadcastLinkPayload(
                 "Test https://google.com", new String[] {"https://google.com"}, thread_id))
@@ -162,7 +168,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testChangeTitle() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128134036896195180";
         IGResponse response =
                 new DirectThreadsUpdateTitleRequest(thread_id, "BOI").execute(client).join();
@@ -172,7 +178,7 @@ public class DirectThreadBroadcastTest {
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testAction() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         String thread_id = "340282366841710300949128130629108875237";
         IGResponse response = new DirectThreadsActionRequest(thread_id, DirectThreadsAction.UNMUTE)
                 .execute(client).join();

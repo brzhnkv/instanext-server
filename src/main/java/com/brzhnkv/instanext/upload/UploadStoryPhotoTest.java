@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,14 +29,23 @@ import com.github.instagram4j.instagram4j.responses.media.MediaResponse.MediaCon
 import com.github.instagram4j.instagram4j.responses.media.RuploadPhotoResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class UploadStoryPhotoTest {
+    public Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public UploadStoryPhotoTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void uploadTest()
             throws IGLoginException, IOException, IGResponseException, ClassNotFoundException {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         File file = new File("src/main/resources/story.jpg");
         byte[] imgData = Files.readAllBytes(file.toPath());
         // some items
@@ -63,7 +73,7 @@ public class UploadStoryPhotoTest {
         MediaConfigureToStoryResponse response = client.sendRequest(configReq).join();
 
         Assert.assertEquals("ok", response.getStatus());
-        log.debug(response.getMedia().getId());
-        log.debug(response.getMedia().get("story_questions").toString());
+        logger.debug(response.getMedia().getId());
+        logger.debug(response.getMedia().get("story_questions").toString());
     }
 }

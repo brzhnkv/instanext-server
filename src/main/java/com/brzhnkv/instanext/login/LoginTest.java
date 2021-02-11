@@ -2,35 +2,39 @@ package com.brzhnkv.instanext.login;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import com.brzhnkv.instanext.Main;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.requests.accounts.AccountsCurrentUserRequest;
 import com.github.instagram4j.instagram4j.responses.IGResponse;
-import junitparams.FileParameters;
-import junitparams.JUnitParamsRunner;
 import lombok.extern.slf4j.Slf4j;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
-@RunWith(JUnitParamsRunner.class)
 public class LoginTest {
-    @Test
-    @FileParameters("src/main/resources/login.csv")
+    public static Logger logger = LoggerFactory.getLogger(Main.class);
+    private final SerializeTestUtil serializeTestUtil;
+
+    public LoginTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     public void testName(String username, String password)
             throws Exception {
         IGClient client = IGClient.builder()
                 .username(username)
                 .password(password)
-                .client(SerializeTestUtil.formTestHttpClient())
+                .client(serializeTestUtil.formTestHttpClient())
                 .onLogin((cli, response) -> {
                     cli.sendRequest(new AccountsCurrentUserRequest()).join();
                 })
                 .login();
-        log.debug(client.toString());
+        logger.debug(client.toString());
         Assert.assertNotNull(client.getSelfProfile());
-        log.debug("Success");
+        logger.debug("Success");
     }
 
     public static void postLoginResponsesHandler(List<CompletableFuture<?>> responses) {
@@ -38,7 +42,7 @@ public class LoginTest {
                 .map(res -> res.thenApply(IGResponse.class::cast))
                 .forEach(res -> {
                     res.thenAccept(igRes -> {
-                        log.info("{} : {}", igRes.getClass().getName(), igRes.getStatus());
+                        logger.info("{} : {}", igRes.getClass().getName(), igRes.getStatus());
                     });
                 });
     }

@@ -1,5 +1,6 @@
 package com.brzhnkv.instanext.accounts;
 
+import com.brzhnkv.instanext.Main;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,16 +10,26 @@ import com.github.instagram4j.instagram4j.requests.qe.QeSyncRequest;
 import com.github.instagram4j.instagram4j.responses.IGResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class QeSyncTest {
+    public Logger logger = LoggerFactory.getLogger(Main.class);
+
+    private final SerializeTestUtil serializeTestUtil;
+
+    public QeSyncTest(SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+    }
+
     @Test
     // Run SerializeTestUtil.serializeLogin first to generate saved sessions
     public void testName() throws Exception {
-        IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
         IGResponse response = new QeSyncRequest().execute(client).join();
         Assert.assertEquals("ok", response.getStatus());
-        response.getExtraProperties().keySet().forEach(log::debug);
-        log.debug("Success");
+        response.getExtraProperties().keySet().forEach(logger::debug);
+        logger.debug("Success");
     }
 }
