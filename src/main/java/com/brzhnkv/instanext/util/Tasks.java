@@ -160,8 +160,8 @@ public class Tasks {
 	}
 	
 	
-	public void sendMediaToGroup(String tag) throws Exception {
-
+	public void sendMediaToGroup(String username, String token, String tag) throws Exception {
+		postsSent = 0;
 
 		IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
@@ -203,14 +203,145 @@ public class Tasks {
 		dispatcher.dispatch(new Notification(log_info), "status");
 	}
 
-	public void likeAndSave(String tag) throws Exception {
+    public void likeByTag(String username, String token, String tag) throws Exception {
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+
+        postsLikedCount = 0;
+        postsAlreadyLikedCount = 0;
+
+        int likeDelay = 3000; // 3sec
+        int skipDelay = 1000; // 1sec
+        int feedIterationDelay = 5000; // 5sec
+        int cycleDelay = 180000; // 3min
+
+        dispatcher.dispatch(new Notification("Задание выполняется."), "status");
+
+        String base_url = "https://www.instagram.com/p/";
+
+        for (int i = 0; i < 3; i++) {
+            // form a FeedIterator for FeedTagRequest
+
+            FeedIterator<FeedTagRequest, FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
+            FeedTagResponse response = null;
+            while (iter.hasNext()) {
+                IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
+                try {
+                    response = iter.next();
+                    // Actions here
+                    response.getItems().forEach(post -> {
+                        String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
+                        if (!post.isHas_liked()) {
+                            Utility.likePost(client2, post);
+                            postsLikedCount++;
+                            String likedLog = "Лайк поставлен: " + url_code;
+                            dispatcher.dispatch(new Notification(likedLog), "log");
+                            try {
+                                Thread.sleep(likeDelay);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            postsAlreadyLikedCount++;
+                            String skipped_like_log = "Лайк уже стоит, пропускаю: " + url_code;
+                            dispatcher.dispatch(new Notification(skipped_like_log), "log");
+                            try {
+                                Thread.sleep(skipDelay);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                // Recommended to wait in between iterations
+                try {
+                    Thread.sleep(feedIterationDelay);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            String logInfo = "Проход #" + i + ". Постов с лайками до начала работы задания в этом проходе: " + postsAlreadyLikedCount + ". Всего лайков поставлено: " + postsLikedCount;
+            dispatcher.dispatch(new Notification(logInfo), "status");
+            postsAlreadyLikedCount = 0;
+
+            logger.info(logInfo);
+            try {
+                Thread.sleep(cycleDelay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        logger.info("Задание выполнено!");
+    }
+
+    public void saveByTag(String username, String token, String tag) throws Exception {
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+
+		postsSavedCount = 0;
+        int saveDelay = 2000; // 2sec
+        int feedIterationDelay = 5000; // 5sec
+        int cycleDelay = 180000; // 3min
+
+        dispatcher.dispatch(new Notification("Задание выполняется."), "status");
+
+        String base_url = "https://www.instagram.com/p/";
+
+        for (int i = 0; i < 1; i++) {
+            // form a FeedIterator for FeedTagRequest
+            FeedIterator<FeedTagRequest, FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
+            FeedTagResponse response = null;
+            while (iter.hasNext()) {
+                IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
+                response = iter.next();
+                // Actions here
+                response.getItems().forEach(post -> {
+                    String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
+                    Utility.savePost(client2, post);
+                    String likedLog = "Пост сохранён: " + url_code;
+                    dispatcher.dispatch(new Notification(likedLog), "log");
+                    postsSavedCount++;
+                    try {
+                        Thread.sleep(saveDelay);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+                // Recommended to wait in between iterations
+                try {
+                    Thread.sleep(feedIterationDelay);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            String logInfo = "Задание выполнено. Постов сохранено: " + postsSavedCount;
+            dispatcher.dispatch(new Notification(logInfo), "status");
+
+            logger.info(logInfo);
+            try {
+                Thread.sleep(cycleDelay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        logger.info("Задание выполнено!");
+    }
+
+	public void likeAndSave(String username, String token, String tag) throws Exception {
 		IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
+		postsLikedCount = 0;
+		postsAlreadyLikedCount = 0;
+		postsSavedCount = 0;
 		dispatcher.dispatch(new Notification("Задание выполняется."), "status");
 
 		String base_url = "https://www.instagram.com/p/";
 
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 2; i++) {
 			// form a FeedIterator for FeedTagRequest
 			FeedIterator<FeedTagRequest, FeedTagResponse> iter = new FeedIterator<>(client, new FeedTagRequest(tag));
 			FeedTagResponse response = null;
@@ -228,7 +359,7 @@ public class Tasks {
 						dispatcher.dispatch(new Notification(likedLog), "log");
 						postsSavedCount++;
 						try {
-							Thread.sleep(2000);
+							Thread.sleep(3000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -241,14 +372,14 @@ public class Tasks {
 				});
 				// Recommended to wait in between iterations
 				try {
-					Thread.sleep(3000);
+					Thread.sleep(5000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 
 			}
 			try {
-				Thread.sleep(10000);
+				Thread.sleep(180000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

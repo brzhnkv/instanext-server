@@ -56,20 +56,52 @@ public class SocketController {
 		tasks.getDispatcher().dispatch(notification, "status");
     	
     }
-    @MessageMapping("/likeandsave")
-    public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String message) throws Exception {
-    	String tag = message;
-    	logger.info(tag);
-		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
-    	tasks.likeAndSave(tag);
-		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+    @MessageMapping("/like")
+    public void likeByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+        JSONObject response = new JSONObject(taskDataJSON);
+        String username = response.getString("username");
+        String token = response.getString("token");
+        String tag = response.getString("tag");
+        tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+        tasks.likeByTag(username, token, tag);
+        tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
     }
+    @MessageMapping("/save")
+    public void saveByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+        JSONObject response = new JSONObject(taskDataJSON);
+        String username = response.getString("username");
+        String token = response.getString("token");
+        String tag = response.getString("tag");
+        tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+        tasks.saveByTag(username, token, tag);
+        tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+    }
+//    @MessageMapping("/likeandsave")
+//    public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String message) throws Exception {
+//    	String tag = message;
+//    	logger.info(tag);
+//		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+//    	tasks.likeAndSave(tag);
+//		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+//    }
+@MessageMapping("/likeandsave")
+public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+    JSONObject response = new JSONObject(taskDataJSON);
+    String username = response.getString("username");
+    String token = response.getString("token");
+    String tag = response.getString("tag");
+    tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+    tasks.likeAndSave(username, token, tag);
+    tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+}
     @MessageMapping("/sendmediatogroup")
-    public void sendMediaToGroup(StompHeaderAccessor stompHeaderAccessor, @RequestBody String message) throws Exception {
-    	String tag = message;
-    	logger.info(tag);
+    public void sendMediaToGroup(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+        JSONObject response = new JSONObject(taskDataJSON);
+        String username = response.getString("username");
+        String token = response.getString("token");
+        String tag = response.getString("tag");
 		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
-    	tasks.sendMediaToGroup(tag);
+    	tasks.sendMediaToGroup(username, token, tag);
 		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
     }
     @MessageMapping("/test")
