@@ -1,21 +1,19 @@
 package com.brzhnkv.instanext;
 
-import com.brzhnkv.instanext.client.ClientService;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.brzhnkv.instanext.util.Tasks;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 
 @Slf4j
 @Controller
@@ -25,10 +23,16 @@ public class SocketController {
 
 	private final Tasks tasks;
 
+    //private final SimpUserRegistry simpUserRegistry;
+
+    private SimpMessagingTemplate template;
+
 
     @Autowired
-    public SocketController(Tasks tasks) {
+    public SocketController(Tasks tasks, SimpMessagingTemplate template) {
         this.tasks = tasks;
+       // this.simpUserRegistry = simpUserRegistry;
+        this.template = template;
     }
     @MessageMapping("/start")
     public void start(StompHeaderAccessor stompHeaderAccessor) {
@@ -40,41 +44,36 @@ public class SocketController {
 		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
         logger.info("stop called");
     }
-    @MessageMapping("/notify")
-    public void notify(StompHeaderAccessor stompHeaderAccessor) {
-    	Notification notification = new Notification();
-    	notification.setStatus("in progress");
-		tasks.getDispatcher().dispatch(notification, "status");
-    	try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	notification.setStatus("done");
-    	notification.setTask("task is sfjskf");
-		tasks.getDispatcher().dispatch(notification, "status");
-    	
-    }
+
+
     @MessageMapping("/like")
     public void likeByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
         JSONObject response = new JSONObject(taskDataJSON);
         String username = response.getString("username");
         String token = response.getString("token");
         String tag = response.getString("tag");
-        tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+
         tasks.likeByTag(username, token, tag);
-        tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+
     }
+    @MessageMapping("/newlike")
+    public void newLikeByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+        JSONObject response = new JSONObject(taskDataJSON);
+        String username = response.getString("username");
+        String token = response.getString("token");
+        String tag = response.getString("tag");
+        tasks.newLikeByTag(username, token, tag);
+    }
+
     @MessageMapping("/save")
     public void saveByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
         JSONObject response = new JSONObject(taskDataJSON);
         String username = response.getString("username");
         String token = response.getString("token");
         String tag = response.getString("tag");
-        tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+
         tasks.saveByTag(username, token, tag);
-        tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+
     }
 //    @MessageMapping("/likeandsave")
 //    public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String message) throws Exception {
@@ -90,9 +89,8 @@ public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody St
     String username = response.getString("username");
     String token = response.getString("token");
     String tag = response.getString("tag");
-    tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+
     tasks.likeAndSave(username, token, tag);
-    tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
 }
     @MessageMapping("/sendmediatogroup")
     public void sendMediaToGroup(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
@@ -100,15 +98,46 @@ public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody St
         String username = response.getString("username");
         String token = response.getString("token");
         String tag = response.getString("tag");
-		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+
     	tasks.sendMediaToGroup(username, token, tag);
-		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
     }
     @MessageMapping("/test")
     public void test(StompHeaderAccessor stompHeaderAccessor) throws Exception {
-		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
-    	tasks.test();
-		//tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+
+        String user = stompHeaderAccessor.getUser().getName();
+        tasks.test(user);
+     //   String ses = stompHeaderAccessor.getSessionAttributes().get("sessionId").toString();
+        logger.info(user);
+     //   String username = stompHeaderAccessor.getFirstNativeHeader("sessionId");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        template.convertAndSendToUser(
+                user,
+                "/queue/status",
+                new Notification("Simple message"));
+
+
+         /*
+        dispatcher.dispatch(new Notification("Задание выполняется."), "status");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        dispatcher.send();
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        dispatcher.dispatch(new Notification("ss"), "status");
+        */
+
     }
     @MessageMapping("/auth/session")
     public void auth_session(StompHeaderAccessor stompHeaderAccessor, @RequestBody String cookie) throws Exception {
@@ -119,11 +148,19 @@ public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody St
     }
     @MessageMapping("/auth/login")
     public void auth_login(StompHeaderAccessor stompHeaderAccessor, @RequestBody String loginDataJSON) throws Exception {
-		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+
     	JSONObject response = new JSONObject(loginDataJSON);
     	String username = response.getString("username");
     	String password = response.getString("password");
     	tasks.authLogin(username, password);
-		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+
+    }
+    @MessageMapping("/auth/addaccount")
+    public void auth_add_account(StompHeaderAccessor stompHeaderAccessor, @RequestBody String loginDataJSON) throws Exception {
+        String user = stompHeaderAccessor.getUser().getName();
+        JSONObject response = new JSONObject(loginDataJSON);
+        String username = response.getString("username");
+        String password = response.getString("password");
+        tasks.authAddAccount(user, username, password);
     }
 }
