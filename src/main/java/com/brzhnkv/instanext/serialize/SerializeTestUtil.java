@@ -1,10 +1,13 @@
 package com.brzhnkv.instanext.serialize;
 
 import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 
 import com.brzhnkv.instanext.Main;
 import com.brzhnkv.instanext.client.Client;
 import com.brzhnkv.instanext.client.ClientService;
+import okhttp3.*;
 import org.junit.Assert;
 
 import com.github.instagram4j.instagram4j.IGClient;
@@ -13,7 +16,6 @@ import com.github.instagram4j.instagram4j.exceptions.IGResponseException;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
 
 
-import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import org.slf4j.Logger;
@@ -37,11 +39,34 @@ public class SerializeTestUtil {
     public String serializeLogin(String username, String password)
             throws ClassNotFoundException, IOException {
 
+
+        int proxyPort = 8000;
+        String proxyHost = "213.139.221.170";
+        final String proxyUsername = "4GZKVg";
+        final String proxyPassword = "MxULAY";
+        Authenticator proxyAuthenticator = new Authenticator() {
+            @Override
+            public Request authenticate(Route route, Response response) throws IOException {
+                String credential = Credentials.basic(proxyUsername, proxyPassword);
+                return response.request().newBuilder()
+                      //  .header("Proxy-Authorization", credential)
+                        .build();
+            }
+        };
+
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+        OkHttpClient httpClient = new OkHttpClient.Builder().proxy(proxy).proxyAuthenticator(proxyAuthenticator).build();
         SerializableCookieJar jar = new SerializableCookieJar();
-        IGClient lib = new IGClient.Builder().username(username).password(password)
-                .client(formTestHttpClient(jar))
-                .onLogin((cli, lr) -> Assert.assertEquals("ok", lr.getStatus()))
-                .login();
+        IGClient lib = null;
+        try {
+            lib = new IGClient.Builder().username(username).password(password)
+                    .client(formTestHttpClient(jar))
+                    .onLogin((cli, lr) -> Assert.assertEquals("ok", lr.getStatus()))
+                   // .client(httpClient)
+                    .login();
+        } catch (IGLoginException e) {
+            e.printStackTrace();
+        }
         logger.info("Serializing. . .");
         String token = lib.getCsrfToken();
         serialize(lib, jar, username, token);
@@ -124,12 +149,48 @@ public class SerializeTestUtil {
     }
 
     public OkHttpClient formTestHttpClient() {
+        int proxyPort = 8000;
+        String proxyHost = "213.139.221.170";
+        final String proxyUsername = "4GZKVg";
+        final String proxyPassword = "MxULAY";
+        Authenticator proxyAuthenticator = new Authenticator() {
+            @Override
+            public Request authenticate(Route route, Response response) throws IOException {
+                String credential = Credentials.basic(proxyUsername, proxyPassword);
+                return response.request().newBuilder()
+                  //      .header("Proxy-Authorization", credential)
+                        .build();
+            }
+        };
+
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+
         return IGUtils.defaultHttpClientBuilder().addInterceptor(loggingInterceptor)
+            //    .proxy(proxy)
+             //   .proxyAuthenticator(proxyAuthenticator)
                 .build();
     }
 
     public OkHttpClient formTestHttpClient(SerializableCookieJar jar) {
+        int proxyPort = 8000;
+        String proxyHost = "213.139.221.170";
+        final String proxyUsername = "4GZKVg";
+        final String proxyPassword = "MxULAY";
+        Authenticator proxyAuthenticator = new Authenticator() {
+            @Override
+            public Request authenticate(Route route, Response response) throws IOException {
+                String credential = Credentials.basic(proxyUsername, proxyPassword);
+                return response.request().newBuilder()
+                //        .header("Proxy-Authorization", credential)
+                        .build();
+            }
+        };
+
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
         return IGUtils.defaultHttpClientBuilder().cookieJar(jar)
-                .addInterceptor(loggingInterceptor).build();
+                .addInterceptor(loggingInterceptor)
+             //   .proxy(proxy)
+             //   .proxyAuthenticator(proxyAuthenticator)
+                .build();
     }
 }

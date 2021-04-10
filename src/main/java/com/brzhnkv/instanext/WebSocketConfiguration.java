@@ -32,9 +32,10 @@ import java.util.Collections;
 @EnableWebSocketMessageBroker
 public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer {
     public Logger logger = LoggerFactory.getLogger(Main.class);
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
-        stompEndpointRegistry.addEndpoint("/ws").setAllowedOrigins("*").addInterceptors(new HttpHandshakeInterceptor());
+        stompEndpointRegistry.addEndpoint("/ws").setAllowedOrigins("*");
     }
 
     @Override
@@ -68,11 +69,12 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                 SimpMessageHeaderAccessor simpAccessor = MessageHeaderAccessor.getAccessor(message, SimpMessageHeaderAccessor.class);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String user = simpAccessor.getFirstNativeHeader("sessionId");
-                    logger.info("InboundChannel: {}", user);
+                    String token = simpAccessor.getFirstNativeHeader("token");
 
-                    simpAccessor.setUser(new StompPrincipal(user) );
-//                    accessor.setSessionId(user);
-//                    logger.info(accessor.getSessionId());
+                    simpAccessor.setUser(new StompPrincipal(user, token) );
+
+                    logger.info("InboundChannel / Incoming connection ====>");
+                    logger.info(user + " | " + token);
                 }
 
                 return message;

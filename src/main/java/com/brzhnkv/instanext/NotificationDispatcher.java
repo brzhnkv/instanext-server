@@ -22,25 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class NotificationDispatcher {
     public Logger logger = LoggerFactory.getLogger(Main.class);
-    private Set<String> listeners = new HashSet<>();
-    private SimpMessagingTemplate template;
-    private SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
 
-    public String getSessionId() {
-        return this.headerAccessor.getSessionId();
-    }
+    private SimpMessagingTemplate template;
+
 
     public NotificationDispatcher(SimpMessagingTemplate template) {
         this.template = template;
-
-    }
-
-    public void add(String sessionId) {
-        listeners.add(sessionId);
-    }
-
-    public void remove(String sessionId) {
-        listeners.remove(sessionId);
     }
 
 
@@ -60,33 +47,24 @@ public class NotificationDispatcher {
                 notification);
     }
 
-  //  @Scheduled(fixedDelay = 5000) //WORKS!!
+    //  @Scheduled(fixedDelay = 5000) //WORKS!!
     public void send(String user) throws InterruptedException {
         String path = "/queue/status";
-        if (getSessionId() != null) {
-            template.convertAndSendToUser(
-                    user,
-                    path,
-                    new Notification("lol"));
 
-            Thread.sleep(3000);
-            template.convertAndSendToUser(
-                    user,
-                    path,
-                    new Notification("lol2"));
-        }
+        template.convertAndSendToUser(
+                user,
+                path,
+                new Notification("lol"));
+
+        Thread.sleep(3000);
+        template.convertAndSendToUser(
+                user,
+                path,
+                new Notification("lol2"));
     }
 
     @EventListener
     public void sessionConnectionHandler(SessionConnectEvent event) {
-        logger.info("Incoming connection ====>");
-        StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
-        String username = sha.getFirstNativeHeader("sessionId");
-        String token = sha.getFirstNativeHeader("token");
-
-        User user = new User(username, token);
-        logger.info(user.getUsername() + " | " + user.getToken() + " || " + user.toString());
-        headerAccessor.setSessionId(username);
     }
 
 

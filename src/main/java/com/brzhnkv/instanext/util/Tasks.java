@@ -3,10 +3,12 @@ package com.brzhnkv.instanext.util;
 import com.brzhnkv.instanext.*;
 
 import com.brzhnkv.instanext.client.ClientService;
+import com.brzhnkv.instanext.friendships.FriendshipsTest;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.actions.feed.FeedIterable;
 import com.github.instagram4j.instagram4j.actions.feed.FeedIterator;
+import com.github.instagram4j.instagram4j.models.friendships.Friendship;
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineMedia;
 import com.github.instagram4j.instagram4j.models.user.Profile;
 import com.github.instagram4j.instagram4j.models.user.User;
@@ -15,12 +17,15 @@ import com.github.instagram4j.instagram4j.requests.direct.DirectThreadsBroadcast
 import com.github.instagram4j.instagram4j.requests.feed.FeedTagRequest;
 import com.github.instagram4j.instagram4j.requests.feed.FeedUserRequest;
 import com.github.instagram4j.instagram4j.requests.friendships.FriendshipsActionRequest;
+import com.github.instagram4j.instagram4j.requests.friendships.FriendshipsActionRequest.FriendshipsAction;
+import com.github.instagram4j.instagram4j.requests.friendships.FriendshipsShowRequest;
 import com.github.instagram4j.instagram4j.requests.media.MediaGetLikersRequest;
 import com.github.instagram4j.instagram4j.requests.users.UsersUsernameInfoRequest;
 import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.github.instagram4j.instagram4j.responses.feed.FeedTagResponse;
 import com.github.instagram4j.instagram4j.responses.feed.FeedUserResponse;
 import com.github.instagram4j.instagram4j.responses.feed.FeedUsersResponse;
+import com.github.instagram4j.instagram4j.responses.friendships.FriendshipStatusResponse;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -31,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -118,10 +124,12 @@ public class Tasks {
     }
 
 
-    public void test(String user) throws Exception {
+    public void test(String user, String token) throws Exception {
         //IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
 
         dispatcher.dispatch(user, new Notification("Задание выполняется."), "status");
+        dispatcher.dispatch(user, new Notification("true"), "running");
+
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -156,8 +164,11 @@ public class Tasks {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+     //   IGClient client = serializeTestUtil.getClientFromSerialize(user, token);
+      //  followLikersFromCSV(user, token, client);
 
-        dispatcher.dispatch(user, new Notification("ss"), "status");
+        dispatcher.dispatch(user, new Notification("Задание выполнено"), "status");
+        dispatcher.dispatch(user, new Notification("false"), "running");
     }
 
     public void getAllFollowers() throws Exception {
@@ -324,7 +335,7 @@ log output:
     public void saveLikersToCSV(IGClient client, String account) throws IOException {
 
 
-        Set<String> likers = new HashSet<>();
+        Set<Long> likers = new HashSet<>();
         // get user's pk
 
         long pk = new UsersUsernameInfoRequest(account).execute(client).join().getUser().getPk();
@@ -344,7 +355,7 @@ log output:
             logger.info(response.getUsers().size() + "");
             response.getUsers().forEach(u -> {
                 if (u.is_private()) return;
-                likers.add(u.getUsername());
+                likers.add(u.getPk());
                 // logger.info(u.getUsername());
             });
 
@@ -362,36 +373,55 @@ log output:
         }
     }
 
-    public void followLikersFromCSV(IGClient client) throws IOException, ClassNotFoundException {
+    public void followLikersFromCSV(String username, String token, IGClient client) throws IOException {
+       // saveLikersToCSV(client, "barashka_aktau");
 
-        List<String> accounts = new ArrayList<>();
+        List<Long> accounts = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader("barashka_aktau.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
-                accounts.add(line);
+                accounts.add(Long.valueOf(line));
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+       /* List<Long> pks = new ArrayList<>();
 
         accounts.forEach(acc -> {
             User user = new UsersUsernameInfoRequest(acc).execute(client).join().getUser();
 
             long pk = user.getPk();
             logger.info(String.valueOf(pk));
-            IGResponse response = new FriendshipsActionRequest(pk, FriendshipsActionRequest.FriendshipsAction.CREATE)
-                    .execute(client).join();
+            pks.add(pk);
             try {
-                Thread.sleep(5000);
+                Thread.currentThread().sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });*/
+
+        accounts.forEach(pk -> {
+            IGResponse response = new FriendshipsActionRequest(pk, FriendshipsAction.CREATE)
+                    .execute(client).join();
+            Assert.assertEquals("ok", response.getStatus());
+              dispatcher.dispatch(username, new Notification("success"), "status");
+
+            try {
+                Thread.currentThread().sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         });
+        //  if (new FriendshipsActionRequest(pk, FriendshipsActionRequest.FriendshipsAction.))
+
     }
 
     public void newLikeByTag(String username, String token, String tag) throws Exception {
         IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
         //saveLikersToCSV(client, "barashka_aktau");
-        followLikersFromCSV(client);
+        followLikersFromCSV(username, token, client);
        /* String account = "brzhnkv";
 
         long pk = new UsersUsernameInfoRequest(account).execute(client).join().getUser().getPk();

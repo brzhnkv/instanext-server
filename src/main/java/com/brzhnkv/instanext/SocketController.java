@@ -34,16 +34,7 @@ public class SocketController {
        // this.simpUserRegistry = simpUserRegistry;
         this.template = template;
     }
-    @MessageMapping("/start")
-    public void start(StompHeaderAccessor stompHeaderAccessor) {
-		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
-        logger.info("start called");
-    }
-    @MessageMapping("/stop")
-    public void stop(StompHeaderAccessor stompHeaderAccessor) {
-		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
-        logger.info("stop called");
-    }
+
 
 
     @MessageMapping("/like")
@@ -102,13 +93,14 @@ public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody St
     	tasks.sendMediaToGroup(username, token, tag);
     }
     @MessageMapping("/test")
-    public void test(StompHeaderAccessor stompHeaderAccessor) throws Exception {
-
+    public void test(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+        JSONObject response = new JSONObject(taskDataJSON);
+        String username = response.getString("username");
+        String token = response.getString("token");
         String user = stompHeaderAccessor.getUser().getName();
-        tasks.test(user);
-     //   String ses = stompHeaderAccessor.getSessionAttributes().get("sessionId").toString();
-        logger.info(user);
-     //   String username = stompHeaderAccessor.getFirstNativeHeader("sessionId");
+        
+       // tasks.test(user, token);
+
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -141,10 +133,10 @@ public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody St
     }
     @MessageMapping("/auth/session")
     public void auth_session(StompHeaderAccessor stompHeaderAccessor, @RequestBody String cookie) throws Exception {
-		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+
     	logger.info(cookie);
     	//tasks.authSession();
-		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+
     }
     @MessageMapping("/auth/login")
     public void auth_login(StompHeaderAccessor stompHeaderAccessor, @RequestBody String loginDataJSON) throws Exception {
