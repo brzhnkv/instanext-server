@@ -3,16 +3,18 @@ package com.brzhnkv.instanext.serialize;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.Optional;
 
 import com.brzhnkv.instanext.Main;
 import com.brzhnkv.instanext.client.Client;
 import com.brzhnkv.instanext.client.ClientService;
+import com.brzhnkv.instanext.user.User;
+import com.brzhnkv.instanext.user.UserService;
 import okhttp3.*;
 import org.junit.Assert;
 
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException;
-import com.github.instagram4j.instagram4j.exceptions.IGResponseException;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
 
 
@@ -20,8 +22,6 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
 
@@ -29,15 +29,18 @@ import org.springframework.stereotype.Service;
 public class SerializeTestUtil {
 
     public static Logger logger = LoggerFactory.getLogger(Main.class);
-    private final ClientService clientService;
+   // private final ClientService clientService;
+    private final UserService userService;
 
-    public SerializeTestUtil(ClientService clientService) {
-        this.clientService = clientService;
+    public SerializeTestUtil(ClientService clientService, UserService userService) {
+      //  this.clientService = clientService;
+        this.userService = userService;
     }
 
 
     public String serializeLogin(String username, String password)
             throws ClassNotFoundException, IOException {
+
 
 
         int proxyPort = 8000;
@@ -69,22 +72,8 @@ public class SerializeTestUtil {
         }
         logger.info("Serializing. . .");
         String token = lib.getCsrfToken();
-        serialize(lib, jar, username, token);
+        serialize(lib, jar, username, password, token);
 
-        ByteArrayInputStream clientFile = new ByteArrayInputStream(clientService
-                .getClientByUsernameAndToken(username, token)
-                .get()
-                .getClientFile());
-        ByteArrayInputStream cookieFile = new ByteArrayInputStream(clientService
-                .getClientByUsernameAndToken(username, token)
-                .get()
-                .getCookieFile());
-
-        IGClient saved = IGClient.from(clientFile,
-                formTestHttpClient(deserialize(cookieFile, SerializableCookieJar.class)));
-        logger.info(saved.toString());
-
-        Assert.assertEquals(saved, lib);
 
         return token;
     }
@@ -98,14 +87,10 @@ public class SerializeTestUtil {
     public IGClient getClientFromSerialize(String username, String token)
             throws ClassNotFoundException, FileNotFoundException, IOException {
 
-        ByteArrayInputStream clientFile = new ByteArrayInputStream(clientService
-                .getClientByUsernameAndToken(username, token)
-                .get()
-                .getClientFile());
-        ByteArrayInputStream cookieFile = new ByteArrayInputStream(clientService
-                .getClientByUsernameAndToken(username, token)
-                .get()
-                .getCookieFile());
+        User userByUsernameAndToken = userService.getUserByUsernameAndToken(username, token).get();
+
+        ByteArrayInputStream clientFile = new ByteArrayInputStream(userByUsernameAndToken.getClientFile());
+        ByteArrayInputStream cookieFile = new ByteArrayInputStream(userByUsernameAndToken.getCookieFile());
 
         IGClient client = IGClient.from(clientFile,
                 formTestHttpClient(deserialize(cookieFile, SerializableCookieJar.class)));
@@ -114,7 +99,7 @@ public class SerializeTestUtil {
     }
 
 
-    public void serialize(Object lib, Object jar, String username, String token) throws IOException {
+    public void serialize(Object lib, Object jar, String username, String password, String token) throws IOException {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(outputStream);
@@ -126,7 +111,9 @@ public class SerializeTestUtil {
         os2.writeObject(jar);
         byte[] cookieFileBytes = outputStream2.toByteArray();
 
-        clientService.addNewClient(new Client(username, token, clientFileBytes, cookieFileBytes));
+       // clientService.addNewClient(new Client(username, token, clientFileBytes, cookieFileBytes));
+
+
 
         outputStream.close();
         os.close();
