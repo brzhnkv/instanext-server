@@ -1,8 +1,6 @@
 package com.brzhnkv.instanext;
 
 import com.brzhnkv.instanext.user.TempUser;
-import com.brzhnkv.instanext.user.User;
-import com.brzhnkv.instanext.user.UserRepository;
 import com.brzhnkv.instanext.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +11,6 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -75,7 +70,7 @@ public class NotificationDispatcher {
     public void sessionDisconnectionHandler(SessionDisconnectEvent event) {
         String username = event.getUser().getName();
         userService.updateUserMessages(username, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
-
+        logger.info(TempUser.getTempLogMessage().toString());
         logger.info("Disconnecting " + username + "!");
     }
 }
