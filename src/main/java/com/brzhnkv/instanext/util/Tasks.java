@@ -5,13 +5,13 @@ import com.brzhnkv.instanext.*;
 import com.brzhnkv.instanext.client.ClientService;
 import com.brzhnkv.instanext.friendships.FriendshipsTest;
 import com.brzhnkv.instanext.serialize.SerializeTestUtil;
-import com.brzhnkv.instanext.user.User;
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.actions.feed.FeedIterable;
 import com.github.instagram4j.instagram4j.actions.feed.FeedIterator;
 import com.github.instagram4j.instagram4j.models.friendships.Friendship;
 import com.github.instagram4j.instagram4j.models.media.timeline.TimelineMedia;
 import com.github.instagram4j.instagram4j.models.user.Profile;
+import com.github.instagram4j.instagram4j.models.user.User;
 import com.github.instagram4j.instagram4j.requests.direct.DirectThreadsBroadcastRequest;
 import com.github.instagram4j.instagram4j.requests.direct.DirectThreadsBroadcastRequest.BroadcastMediaSharePayload;
 import com.github.instagram4j.instagram4j.requests.feed.FeedTagRequest;
@@ -47,38 +47,89 @@ public class Tasks {
     public Logger logger = LoggerFactory.getLogger(Main.class);
 
     private final NotificationDispatcher dispatcher;
-
+    private final ClientService clientService;
+    private final SerializeTestUtil serializeTestUtil;
 
     private int postsAlreadyLikedCount;
     private int postsLikedCount;
     private int postsSavedCount;
-    private int postsSent = 0;
+    private int postsSent;
 
-
+    private String username;
+    private String token;
 
     @Autowired
-    public Tasks(NotificationDispatcher dispatcher) {
+    public Tasks(NotificationDispatcher dispatcher, ClientService clientService, SerializeTestUtil serializeTestUtil) {
+        this.serializeTestUtil = serializeTestUtil;
+        this.clientService = clientService;
         this.dispatcher = dispatcher;
         this.postsAlreadyLikedCount = 0;
         this.postsLikedCount = 0;
         this.postsSavedCount = 0;
-
-
+        this.postsSent = 0;
+        this.username = "galinabraz";
+        this.token = "lTj9agKZKUXu81ad4cIEYgNWtBAR9hnq";
     }
 
     public NotificationDispatcher getDispatcher() {
         return dispatcher;
     }
 
+    public void authSession(String username, String token) throws Exception {
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+
+
+        String profile_pic_url = client.getSelfProfile().getProfile_pic_url();
+        logger.info(client.getCsrfToken());
+
+        HashMap<String, String> data = new HashMap<String, String>();
+        //data.put("username", username);
+        data.put("userProfilePic", profile_pic_url);
+        //data.put("token", token);
+        dispatcher.dispatch(username, new Notification(data), "auth");
+    }
+
+    public void authLogin(String username, String password) throws Exception {
+        logger.info(username);
+        logger.info(password);
+        String token = serializeTestUtil.serializeLogin(username, password);
+
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+        String profile_pic_url = client.getSelfProfile().getProfile_pic_url();
+
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("username", username);
+        data.put("token", token);
+        data.put("userProfilePic", profile_pic_url);
+        dispatcher.dispatch("guest", new Notification(data), "login");
+
+        //authSession(username, token);
+    }
+
+    public void authAddAccount(String user, String username, String password) throws Exception {
+        logger.info(username);
+        logger.info(password);
+        String token = serializeTestUtil.serializeLogin(username, password);
+
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
+        String profile_pic_url = client.getSelfProfile().getProfile_pic_url();
+
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("username", username);
+        data.put("token", token);
+        data.put("userProfilePic", profile_pic_url);
+        dispatcher.dispatch(user, new Notification(data), "login/addaccount");
+
+        //authSession(username, token);
+    }
+
 
     public void test(String user, String token) throws Exception {
         //IGClient client = SerializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
 
-        dispatcher.dispatch(user, new Notification("задание выполняется | публикаций в обработке: 120"), "status");
+        dispatcher.dispatch(user, new Notification("Задание выполняется."), "status");
         dispatcher.dispatch(user, new Notification("true"), "running");
-        dispatcher.dispatch(user, new Notification(String.valueOf(postsSent)), "log");
 
-        postsSent  = 48;
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -86,7 +137,6 @@ public class Tasks {
         }
         dispatcher.send(user);
 
-        dispatcher.dispatch(user, new Notification(String.valueOf(postsSent)), "log");
 /*
 		List<ResponseFile> files = storageService.getAllFiles().map(dbFile -> {
 			String fileDownloadUri = ServletUriComponentsBuilder
@@ -117,12 +167,12 @@ public class Tasks {
      //   IGClient client = serializeTestUtil.getClientFromSerialize(user, token);
       //  followLikersFromCSV(user, token, client);
 
-        dispatcher.dispatch(user, new Notification("задание выполнено | публикаций обработано: 120"), "status");
+        dispatcher.dispatch(user, new Notification("Задание выполнено"), "status");
         dispatcher.dispatch(user, new Notification("false"), "running");
     }
 
     public void getAllFollowers() throws Exception {
-        IGClient client =  Serialize.deserializeUser(new User("username", "token"));
+        IGClient client = serializeTestUtil.getClientFromSerialize("igclient.ser", "cookie.ser");
 
         String username = "bowsmaker";
 
@@ -151,8 +201,8 @@ public class Tasks {
 
     public void sendMediaToGroup(String username, String token, String tag) throws Exception {
         postsSent = 0;
-        User user = new User(username, token);
-        IGClient client =  Serialize.deserializeUser(user);
+
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
         dispatcher.dispatch(username, new Notification("Задание выполняется."), "status");
         String base_url = "https://www.instagram.com/p/";
@@ -162,7 +212,7 @@ public class Tasks {
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             response = iter.next();
-            IGClient client2 = Serialize.deserializeUser(user);
+            IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
             // Actions here
             response.getItems().forEach(post -> {
                 String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
@@ -275,7 +325,7 @@ log output:
 
 
     public void testLikers(String mediaId) throws Exception {
-        IGClient client = Serialize.deserializeUser(new User("username", "token"));
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
         FeedUsersResponse response =
                 new MediaGetLikersRequest(mediaId).execute(client).join();
         logger.info(response.getUsers().size() + "");
@@ -368,7 +418,7 @@ log output:
     }
 
     public void newLikeByTag(String username, String token, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(new User(username, token));
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
         //saveLikersToCSV(client, "barashka_aktau");
         followLikersFromCSV(username, token, client);
@@ -441,7 +491,7 @@ log output:
     }
 
     public void likeByTag(String username, String token, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(new User(username, token));
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
         postsLikedCount = 0;
         postsAlreadyLikedCount = 0;
@@ -461,7 +511,7 @@ log output:
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             try {
-                IGClient client2 = Serialize.deserializeUser(new User(username, token));
+                IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
                 response = iter.next();
                 if (response.getItems() != null) {
                     response.getItems().forEach(post -> {
@@ -491,7 +541,7 @@ log output:
 
         for (TimelineMedia post : posts) {
             if (post.isHas_liked()) continue;
-            IGClient client2 = Serialize.deserializeUser(new User(username, token));
+            IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
 
             Utility.likePost(client2, post);
@@ -514,7 +564,7 @@ log output:
     }
 
     public void saveByTag(String username, String token, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(new User(username, token));
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
         postsSavedCount = 0;
         int saveDelay = 2000; // 2sec
@@ -531,7 +581,7 @@ log output:
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             try {
-                IGClient client2 = Serialize.deserializeUser(new User(username, token));
+                IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
                 response = iter.next();
                 if (response.getItems() != null) {
                     response.getItems().forEach(post -> {
@@ -560,7 +610,7 @@ log output:
         dispatcher.dispatch(username, new Notification(str), "status");
 
         for (TimelineMedia post : posts) {
-            IGClient client2 = Serialize.deserializeUser(new User(username, token));
+            IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
 
             Utility.savePost(client2, post);
@@ -583,7 +633,7 @@ log output:
     }
 
     public void likeAndSave(String username, String token, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(new User(username, token));
+        IGClient client = serializeTestUtil.getClientFromSerialize(username, token);
 
         postsLikedCount = 0;
         postsAlreadyLikedCount = 0;
@@ -627,7 +677,7 @@ log output:
 
         for (TimelineMedia post : posts) {
             if (post.isHas_liked()) continue;
-            IGClient client2 = Serialize.deserializeUser(new User(username, token));
+            IGClient client2 = serializeTestUtil.getClientFromSerialize(username, token);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
 
             Utility.likePost(client2, post);

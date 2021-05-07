@@ -1,20 +1,29 @@
 package com.brzhnkv.instanext;
 
-import lombok.extern.slf4j.Slf4j;
+import com.brzhnkv.instanext.client.Client;
+import com.brzhnkv.instanext.client.ClientService;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.Base64;
 
 
 @Slf4j
@@ -28,13 +37,20 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 @EnableConfigurationProperties
 public class Main {
 
+	// private String username = "reactnextjs";
+	// private String password = "reactnextjs!";
 
-	// TODO
-	/*
-		allowedUsersList
-	 */
+	// private String username = "galinabraz";
+	//private String password = "lapushok2010";
 
+	//private String username = "bowsmaker";
+	//private String password = "lapushok2010";
 	public Logger logger = LoggerFactory.getLogger(Main.class);
+
+    private final ClientService clientService;
+    public Main(ClientService clientService) {
+        this.clientService = clientService;
+    }
 
 
     public static void main(String[] args) {
@@ -67,5 +83,41 @@ public class Main {
 
 		return response;
 	}
+
+    @RequestMapping(path = "/test1", method = RequestMethod.GET)
+    public String test() throws IOException {
+
+        logger.info("works");
+
+
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+		Resource resource = resolver.getResource("igclient.ser");
+		Resource resource2 = resolver.getResource("cookie.ser");
+
+		File to = resource.getFile(), cookFile = resource2.getFile();
+		InputStream fileIn = resource.getInputStream();
+		InputStream cookieIS = resource2.getInputStream();
+
+		byte[] buffer = new byte[1024];
+		fileIn.read(buffer);
+
+		byte[] clientFile = buffer;
+
+		String username = "";
+		String token = "";
+
+       // clientService.addNewClient(new Client("keklol2", "234234355453", clientFile, cookieFile));
+
+		byte[] clientFileFromDB = clientService.getClientByUsernameAndToken(username, token).get().getClientFile();
+		byte[] cookieFileFromDB = clientService.getClientByUsernameAndToken(username, token).get().getCookieFile();
+
+		ByteArrayInputStream clientInputStream = new ByteArrayInputStream(clientFileFromDB);
+		ByteArrayInputStream cookieInputStream = new ByteArrayInputStream(cookieFileFromDB);
+
+		String s = new String(clientFileFromDB);
+		logger.info(s);
+
+        return "test1";
+    }
 
 }

@@ -1,7 +1,6 @@
 package com.brzhnkv.instanext.util;
 
 import com.brzhnkv.instanext.Main;
-import com.brzhnkv.instanext.user.TempUser;
 import org.junit.Assert;
 
 import com.github.instagram4j.instagram4j.IGClient;
@@ -19,41 +18,45 @@ public final class Utility {
 	public static Logger logger = LoggerFactory.getLogger(Main.class);
 
 	public static void likePost(IGClient client, TimelineMedia post) {
+		try {
 			String media_id = post.getId();
 			IGResponse response = null;
-			response = new MediaActionRequest(media_id, MediaAction.LIKE).execute(client).exceptionally(e -> {
-				TempUser.postsDeletedCount++;
-				return null;
-			}).join();
-			//Assert.assertEquals("ok", response.getStatus());
+			response = new MediaActionRequest(media_id, MediaAction.LIKE).execute(client).join();
+			Assert.assertEquals("ok", response.getStatus());
+		} catch(Exception e) {
+			logger.info(e.getMessage());
+		}
 	}
 
 	public static void unlikePost(IGClient client, TimelineMedia post) {
+		try {
 			String media_id = post.getId();
-			IGResponse response = new MediaActionRequest(media_id, MediaAction.UNLIKE).execute(client).exceptionally(e -> {
-				TempUser.postsDeletedCount++;
-				return null;
-			}).join();
-			//Assert.assertEquals("ok", response.getStatus());
+			IGResponse response = new MediaActionRequest(media_id, MediaAction.UNLIKE).execute(client).join();
+			Assert.assertEquals("ok", response.getStatus());
+		} catch(Exception e) {
+			logger.info(e.getMessage());
+		}
 	}
 
 
 	public static void savePost(IGClient client, TimelineMedia post) {
+		try {
 			String media_id = post.getId();
-			IGResponse response = new MediaActionRequest(media_id, MediaAction.SAVE).execute(client).exceptionally(e -> {
-				TempUser.postsDeletedCount++;
-				return null;
-			}).join();
-			//Assert.assertEquals("ok", response.getStatus());
+			IGResponse response = new MediaActionRequest(media_id, MediaAction.SAVE).execute(client).join();
+			Assert.assertEquals("ok", response.getStatus());
+		} catch(Exception e) {
+			logger.info(e.getMessage());
+		}
 	}
 
 	public static void unsavePost(IGClient client, TimelineMedia post) {
+		try {
 			String media_id = post.getId();
-			IGResponse response = new MediaActionRequest(media_id, MediaAction.UNSAVE).execute(client).exceptionally(e -> {
-				TempUser.postsDeletedCount++;
-				return null;
-			}).join();
-			//Assert.assertEquals("ok", response.getStatus());
+			IGResponse response = new MediaActionRequest(media_id, MediaAction.UNSAVE).execute(client).join();
+			Assert.assertEquals("ok", response.getStatus());
+		} catch(Exception e) {
+			logger.info(e.getMessage());
+		}
 	}
 
 

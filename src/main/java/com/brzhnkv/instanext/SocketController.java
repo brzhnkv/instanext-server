@@ -1,9 +1,5 @@
 package com.brzhnkv.instanext;
 
-import com.brzhnkv.instanext.task.Task;
-import com.brzhnkv.instanext.user.TempUser;
-import com.brzhnkv.instanext.user.User;
-import com.brzhnkv.instanext.user.UserService;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -25,8 +22,6 @@ public class SocketController {
 	
 
 	private final Tasks tasks;
-    private final NotificationDispatcher dispatcher;
-    private final UserService userService;
 
     //private final SimpUserRegistry simpUserRegistry;
 
@@ -34,11 +29,10 @@ public class SocketController {
 
 
     @Autowired
-    public SocketController(Tasks tasks, SimpMessagingTemplate template, NotificationDispatcher dispatcher, UserService userService) {
+    public SocketController(Tasks tasks, SimpMessagingTemplate template) {
         this.tasks = tasks;
+       // this.simpUserRegistry = simpUserRegistry;
         this.template = template;
-        this.dispatcher = dispatcher;
-        this.userService = userService;
     }
 
 
@@ -47,116 +41,77 @@ public class SocketController {
     public void likeByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
         JSONObject response = new JSONObject(taskDataJSON);
         String username = response.getString("username");
+        String token = response.getString("token");
         String tag = response.getString("tag");
-        String taskName = "[лайк : #" + tag + "] ";
 
-        User user = userService.getUser(username);
-        userService.setStatus(username, true);
-        userService.clearMessages(username);
-        TempUser.clear();
+        tasks.likeByTag(username, token, tag);
 
-        Task task = new Task(dispatcher);
-        task.likeByTag(user, username, tag);
-
-        userService.updateUserMessages(username, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
-        userService.setStatus(username, false);
-
-
-        dispatcher.dispatch(username, new Notification(taskName + "задание выполнено"), "status");
     }
-
+    @MessageMapping("/newlike")
+    public void newLikeByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+        JSONObject response = new JSONObject(taskDataJSON);
+        String username = response.getString("username");
+        String token = response.getString("token");
+        String tag = response.getString("tag");
+        tasks.newLikeByTag(username, token, tag);
+    }
 
     @MessageMapping("/save")
     public void saveByTag(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
         JSONObject response = new JSONObject(taskDataJSON);
         String username = response.getString("username");
+        String token = response.getString("token");
         String tag = response.getString("tag");
-        String taskName = "[лайк : #" + tag + "] ";
 
-        User user = userService.getUser(username);
-        userService.setStatus(username, true);
-        userService.clearMessages(username);
-        TempUser.clear();
-
-        Task task = new Task(dispatcher);
-        task.saveByTag(user, username, tag);
-
-        userService.updateUserMessages(username, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
-        userService.setStatus(username, false);
-
-
-        dispatcher.dispatch(username, new Notification(taskName + "задание выполнено"), "status");
+        tasks.saveByTag(username, token, tag);
 
     }
+//    @MessageMapping("/likeandsave")
+//    public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String message) throws Exception {
+//    	String tag = message;
+//    	logger.info(tag);
+//		tasks.getDispatcher().add(stompHeaderAccessor.getSessionId());
+//    	tasks.likeAndSave(tag);
+//		tasks.getDispatcher().remove(stompHeaderAccessor.getSessionId());
+//    }
+@MessageMapping("/likeandsave")
+public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
+    JSONObject response = new JSONObject(taskDataJSON);
+    String username = response.getString("username");
+    String token = response.getString("token");
+    String tag = response.getString("tag");
 
-
-    @MessageMapping("/likeandsave")
-    public void likeAndSave(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
-        JSONObject response = new JSONObject(taskDataJSON);
-        String username = response.getString("username");
-        String tag = response.getString("tag");
-        String taskName = "[лайк + сохранение : #" + tag + "] ";
-
-        User user = userService.getUser(username);
-        userService.setStatus(username, true);
-        userService.clearMessages(username);
-        TempUser.clear();
-
-        Task task = new Task(dispatcher);
-        task.likeAndSave(user, username, tag);
-
-        userService.updateUserMessages(username, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
-        userService.setStatus(username, false);
-
-        dispatcher.dispatch(username, new Notification(taskName + "задание выполнено"), "status");
-    }
-
-
+    tasks.likeAndSave(username, token, tag);
+}
     @MessageMapping("/sendmediatogroup")
     public void sendMediaToGroup(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
         JSONObject response = new JSONObject(taskDataJSON);
         String username = response.getString("username");
         String token = response.getString("token");
         String tag = response.getString("tag");
-        String taskName = "[самолет : #" + tag + "] ";
 
-        User user = userService.getUser(username);
-        userService.setStatus(username, true);
-        userService.clearMessages(username);
-        TempUser.clear();
-
-        Task task = new Task(dispatcher);
-        task.likeAndSave(user, username, tag);
-
-        userService.updateUserMessages(username, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
-        userService.setStatus(username, false);
-
-        dispatcher.dispatch(username, new Notification(taskName + "задание выполнено"), "status");
+    	tasks.sendMediaToGroup(username, token, tag);
     }
-
-
     @MessageMapping("/test")
     public void test(StompHeaderAccessor stompHeaderAccessor, @RequestBody String taskDataJSON) throws Exception {
         JSONObject response = new JSONObject(taskDataJSON);
         String username = response.getString("username");
+        String token = response.getString("token");
+        String user = stompHeaderAccessor.getUser().getName();
+        
+       // tasks.test(user, token);
 
-        //String user = stompHeaderAccessor.getUser().getName();
-        User user = userService.getUser(username);
-        userService.setStatus(username, true);
-        userService.clearMessages(username);
-
-        //tasks.test(user, token);
-        Task task = new Task(dispatcher);
-        task.test(user, username);
-
-
-        userService.setStatus(username, false);
-      /*  template.convertAndSendToUser(
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        template.convertAndSendToUser(
                 user,
                 "/queue/status",
                 new Notification("Simple message"));
 
-*/
+
          /*
         dispatcher.dispatch(new Notification("Задание выполняется."), "status");
         try {
@@ -175,5 +130,29 @@ public class SocketController {
         dispatcher.dispatch(new Notification("ss"), "status");
         */
 
+    }
+    @MessageMapping("/auth/session")
+    public void auth_session(StompHeaderAccessor stompHeaderAccessor, @RequestBody String cookie) throws Exception {
+
+    	logger.info(cookie);
+    	//tasks.authSession();
+
+    }
+    @MessageMapping("/auth/login")
+    public void auth_login(StompHeaderAccessor stompHeaderAccessor, @RequestBody String loginDataJSON) throws Exception {
+
+    	JSONObject response = new JSONObject(loginDataJSON);
+    	String username = response.getString("username");
+    	String password = response.getString("password");
+    	tasks.authLogin(username, password);
+
+    }
+    @MessageMapping("/auth/addaccount")
+    public void auth_add_account(StompHeaderAccessor stompHeaderAccessor, @RequestBody String loginDataJSON) throws Exception {
+        String user = stompHeaderAccessor.getUser().getName();
+        JSONObject response = new JSONObject(loginDataJSON);
+        String username = response.getString("username");
+        String password = response.getString("password");
+        tasks.authAddAccount(user, username, password);
     }
 }
