@@ -2,22 +2,9 @@ spring:
   config:
     activate:
       on-profile: local
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
   batch:
     job:
       enabled: false
-
-app:
-  datasource:
-    jdbc-url: jdbc:postgresql://localhost:5432/igdb
-    username: postgres
-    password: postgres
-    maximum-pool-size: 30
-
-
 
 
 ---
@@ -25,20 +12,7 @@ app:
 spring:
   config:
     activate:
-      on-profile: heroku
+      on-profile: production
   batch:
     job:
       enabled: false
-  jpa:
-    hibernate:
-      ddl-auto: update
-
-server:
-  port: ${PORT}
-
-app:
-  datasource:
-    jdbc-url: ${SPRING_DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
-    maximum-pool-size: 30
