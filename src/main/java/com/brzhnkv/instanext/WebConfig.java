@@ -12,11 +12,11 @@ public class WebConfig implements WebMvcConfigurer
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowCredentials(false)
-                .maxAge(3600)
-                .allowedHeaders("*")
-                .exposedHeaders("X-Auth-Token", "Authorization")
-                .allowedMethods("POST", "GET", "DELETE", "PUT", "OPTIONS");
+                .allowedOrigins("http://localhost:19006", "https://liketime.vercel.app")
+                .allowedMethods("GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("Origin", "X-Requested-With", "Content-Type", "Accept","X-Auth-Token", "Authorization")
+                .allowCredentials(true)
+                .maxAge(3600);
+
     }
 }

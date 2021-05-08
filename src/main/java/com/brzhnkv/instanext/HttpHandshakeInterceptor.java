@@ -43,7 +43,10 @@ public class HttpHandshakeInterceptor implements HandshakeInterceptor {
             ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
             HttpSession session = servletRequest.getServletRequest().getSession();
          //   attributes.put("sessionId", "brzhnkv");
-
+            attributes.put("server", "LikeTime Server");
+            attributes.put("sessionId", "sdiehfueihiufghfiugshfu");
+            servletRequest.getServletRequest().setAttribute("sessionId", "sdiehfueihiufghfiugshfu" );
+            servletRequest.getServletRequest().setAttribute("server", "LikeTime Server" );
         }
         return true;
     }
