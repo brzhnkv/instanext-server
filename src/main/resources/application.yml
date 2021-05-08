@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+app:
+  datasource:
+    jdbc-url: jdbc:postgresql://localhost:5432/igdb
+    username: postgres
+    password: postgres
+    pool-size: 30
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: heroku
+
+server:
+  port: ${PORT}
+
+app:
+  datasource:
+    jdbc-url: ${SPRING_DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    pool-size: 30
