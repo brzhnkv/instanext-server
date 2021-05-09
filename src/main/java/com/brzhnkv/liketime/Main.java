@@ -1,5 +1,6 @@
 package com.brzhnkv.liketime;
 
+import com.sun.net.httpserver.HttpServer;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -16,6 +17,15 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+
 
 @Slf4j
 @EnableAsync
@@ -28,44 +38,14 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 @EnableConfigurationProperties
 public class Main {
 
-
-	// TODO
-	/*
-		allowedUsersList
-	 */
-
-	public Logger logger = LoggerFactory.getLogger(Main.class);
-
+    public Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-		SpringApplication.run(Main.class, args);
-	}
+        SpringApplication.run(Main.class, args);
+    }
 
-
-
-	@GetMapping("/")
-	public String deploy() {
-		return "Welcome to LikeTime Server";
-	}
-
-
-
-	@RequestMapping(path = "/test", method = RequestMethod.POST)
-	public ResponseEntity authUser(@RequestBody String authData){
-
-
-		JSONObject obj = new JSONObject(authData);
-		String username = obj.getString("username");
-		String password = obj.getString("password");
-
-		logger.info(username);
-		logger.info(password);
-
-
-		ResponseEntity response;
-		response = new ResponseEntity("Success", HttpStatus.OK);
-
-		return response;
-	}
-
+    @GetMapping("/")
+    public String hello() {
+        return "Welcome to LikeTime Server";
+    }
 }
