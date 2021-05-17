@@ -5,6 +5,8 @@ import com.brzhnkv.liketime.user.User;
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.exceptions.IGLoginException;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.cloud.StorageClient;
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.junit.Assert;
@@ -19,18 +21,40 @@ public class Serialize {
 
     public static Logger logger = LoggerFactory.getLogger(Main.class);
 
-    public static IGClient deserializeUser(User user)
-            throws ClassNotFoundException, IOException {
+    public static IGClient deserializeUser(String username) {
 
-        ByteArrayInputStream clientFile = new ByteArrayInputStream(user.getClientFile());
-        ByteArrayInputStream cookieFile = new ByteArrayInputStream(user.getCookieFile());
-        ObjectInputStream oIn = new ObjectInputStream(cookieFile);
+        String clientPath = username + "/clientFile";
+        String cookiePath = username + "/cookieFile";
 
-        IGClient client = IGClient.from(clientFile,
-                formTestHttpClient(SerializableCookieJar.class.cast(oIn.readObject())));
+        Bucket bucket = StorageClient.getInstance().bucket();
+        byte[] clientBytes = bucket.get(clientPath).getContent();
+        byte[] cookieBytes = bucket.get(cookiePath).getContent();
 
-        cookieFile.close();
-        oIn.close();
+        ByteArrayInputStream clientFile = new ByteArrayInputStream(clientBytes);
+        ByteArrayInputStream cookieFile = new ByteArrayInputStream(cookieBytes);
+        ObjectInputStream oIn = null;
+        try {
+            oIn = new ObjectInputStream(cookieFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        IGClient client = null;
+        try {
+            client = IGClient.from(clientFile,
+                    formTestHttpClient(SerializableCookieJar.class.cast(oIn.readObject())));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            cookieFile.close();
+            oIn.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return client;
     }
@@ -68,53 +92,41 @@ public class Serialize {
         ObjectOutputStream os = null;
         try {
             os = new ObjectOutputStream(outputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             os.writeObject(lib);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         byte[] clientFileBytes = outputStream.toByteArray();
 
         ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
         ObjectOutputStream os2 = null;
         try {
             os2 = new ObjectOutputStream(outputStream2);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             os2.writeObject(jar);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         byte[] cookieFileBytes = outputStream2.toByteArray();
 
         try {
             outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
             outputStream2.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             os2.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return new User(password, token, profilePicUrl, clientFileBytes, cookieFileBytes);
+        Bucket bucket = StorageClient.getInstance().bucket();
+
+        String blobStringClient = username + "/clientFile";
+        String blobStringCookie = username + "/cookieFile";
+        bucket.create(blobStringClient, clientFileBytes);
+        bucket.create(blobStringCookie, cookieFileBytes);
+
+        return new User(token, password, profilePicUrl);
     }
 
     private static OkHttpClient formTestHttpClient() {

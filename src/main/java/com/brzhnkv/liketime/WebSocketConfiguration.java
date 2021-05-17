@@ -12,12 +12,9 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.scheduling.TaskScheduler;
-
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
@@ -31,8 +28,6 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
         stompEndpointRegistry
                 .addEndpoint("/ws")
                 .setAllowedOrigins("*");
-
-                //.addInterceptors(new HttpHandshakeInterceptor());
     }
 
     @Override
@@ -48,12 +43,10 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
     }
 
 
-
     @Bean
     public TaskScheduler heartBeatScheduler() {
         return new ThreadPoolTaskScheduler();
     }
-
 
 
     @Override
@@ -68,7 +61,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                     String user = simpAccessor.getFirstNativeHeader("sessionId");
                     String token = simpAccessor.getFirstNativeHeader("token");
 
-                    simpAccessor.setUser(new StompPrincipal(user, token) );
+                    simpAccessor.setUser(new StompPrincipal(user, token));
 
                     logger.info("InboundChannel / Incoming connection ====>");
                     logger.info(user + " | " + token);

@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -18,12 +20,11 @@ public class UserService {
 
     public Logger logger = LoggerFactory.getLogger(Main.class);
 
-    private final Firestore db;
-
     @Autowired
-    public UserService(Firestore db) {
-        this.db = db;
-    }
+    private Firestore db;
+
+
+    public UserService() {}
 
     public User createUser(String username, String password) throws ExecutionException, InterruptedException, IGLoginException {
         DocumentReference docRef = db.collection("users").document(username);
@@ -34,7 +35,7 @@ public class UserService {
         if (document.exists()) {
             // convert document to POJO
             user = document.toObject(User.class);
-            if (user.getPassword() == password) return user;
+            if (user.getPassword().equals(password)) return user;
             else return null;
         } else {
             user = Serialize.serializeUser(username, password);
@@ -79,30 +80,27 @@ public class UserService {
         db.close();
     }
 
-    public Messages getMessages(String username) throws ExecutionException, InterruptedException {
-        DocumentReference docRef = db.collection("messages").document(username);
-        // asynchronously retrieve the document
-        ApiFuture<DocumentSnapshot> future = docRef.get();
-        // block on response
-        DocumentSnapshot document = future.get();
-        Messages messages = null;
-        if (document.exists()) {
-            // convert document to POJO
-            messages = document.toObject(Messages.class);
-            return messages;
-        } else {
-            logger.info("empty");
-            return null;
-        }
-    }
-
-    public void updateMessages(String username, boolean status, List<String> statusMessages, List<String> logMessages)  {
+    public void updateMessages(String username, boolean status, List<String> statusMessages, List<String> logMessages) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("status", status);
         updates.put("statusMessages", statusMessages);
         updates.put("logMessages", logMessages);
         try {
-            db.collection("messages").document(username).update(updates).get();
+            db.collection("messages").document(username).set(updates).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateMessages(String username, List<String> statusMessages, List<String> logMessages) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", false);
+        updates.put("statusMessages", statusMessages);
+        updates.put("logMessages", logMessages);
+        try {
+            db.collection("messages").document(username).set(updates).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {

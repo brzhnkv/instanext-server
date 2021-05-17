@@ -18,7 +18,7 @@
 
     <properties>
         <appName>liketime-server</appName>
-        <java.version>11</java.version>
+        <java.version>15</java.version>
     </properties>
 
     <dependencies>
@@ -75,11 +75,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20200518</version>
+            <version>20210307</version>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -123,8 +125,6 @@
             <artifactId>google-cloud-firestore</artifactId>
             <version>2.3.0</version>
         </dependency>
-
-
     </dependencies>
 
     <build>
@@ -151,23 +151,23 @@
                 <artifactId>appengine-maven-plugin</artifactId>
                 <version>2.4.0</version>
             </plugin>
-           <!-- <plugin>
+            <plugin>
                 <groupId>com.heroku.sdk</groupId>
                 <artifactId>heroku-maven-plugin</artifactId>
                 <version>3.0.3</version>
                 <configuration>
                     <appName>instanext-server</appName>
                     <processTypes>
-                        <web>java $JAVA_OPTS -cp target/classes:target/dependency/* com.brzhnkv.liketime.Main</web>
+                        <web>java $JAVA_OPTS -Dserver.port=$PORT -cp target/classes:target/dependency/* com.brzhnkv.liketime.Main</web>
                     </processTypes>
                 </configuration>
-            </plugin>-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>13</source>
+                    <target>13</target>
                 </configuration>
             </plugin>
 

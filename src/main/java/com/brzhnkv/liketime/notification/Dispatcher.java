@@ -1,29 +1,31 @@
-package com.brzhnkv.liketime;
+package com.brzhnkv.liketime.notification;
 
+import com.brzhnkv.liketime.Main;
+import com.brzhnkv.liketime.notification.Notification;
 import com.brzhnkv.liketime.user.TempUser;
 import com.brzhnkv.liketime.user.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Service
-public class NotificationDispatcher {
+public class Dispatcher {
     public Logger logger = LoggerFactory.getLogger(Main.class);
 
+    @Autowired
     private SimpMessagingTemplate template;
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    public NotificationDispatcher(SimpMessagingTemplate template, UserService userService) {
-        this.template = template;
-        this.userService = userService;
-    }
+    public Dispatcher() {}
 
 
     public void dispatch(String user, Notification notification, String path) {
@@ -62,15 +64,15 @@ public class NotificationDispatcher {
     public void sessionConnectionHandler(SessionConnectEvent event) {
         String username = event.getUser().getName();
         logger.info("User " + username + " connected!");
-        userService.updateMessages(username, true, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
+        if (TempUser.taskIsRunning)
+            userService.updateMessages(username, true, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
+        else userService.updateMessages(username, false, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
     }
 
 
     @EventListener
     public void sessionDisconnectionHandler(SessionDisconnectEvent event) {
         String username = event.getUser().getName();
-        userService.updateMessages(username, true, TempUser.getTempStatusMessage(), TempUser.getTempLogMessage());
-        logger.info(TempUser.getTempLogMessage().toString());
         logger.info("Disconnecting " + username + "!");
     }
 }

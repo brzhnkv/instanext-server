@@ -1,11 +1,10 @@
 package com.brzhnkv.liketime.task;
 
 import com.brzhnkv.liketime.Main;
-import com.brzhnkv.liketime.Notification;
-import com.brzhnkv.liketime.NotificationDispatcher;
-import com.brzhnkv.liketime.user.TempUser;
-import com.brzhnkv.liketime.user.User;
+import com.brzhnkv.liketime.notification.Notification;
+import com.brzhnkv.liketime.notification.Dispatcher;
 import com.brzhnkv.liketime.serialize.Serialize;
+import com.brzhnkv.liketime.user.TempUser;
 import com.brzhnkv.liketime.util.Utility;
 import com.github.instagram4j.instagram4j.IGClient;
 import com.github.instagram4j.instagram4j.actions.feed.FeedIterator;
@@ -18,26 +17,27 @@ import com.github.instagram4j.instagram4j.utils.IGUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
 
 
+@Component
 public class Task {
     public Logger logger = LoggerFactory.getLogger(Main.class);
 
-
-    private NotificationDispatcher dispatcher;
-
     @Autowired
-    public Task(NotificationDispatcher dispatcher) {
-        this.dispatcher = dispatcher;
-    }
+    private Dispatcher dispatcher;
 
 
-    public void likeByTag(User user, String username, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(user);
+    public Task() {}
 
+
+    public void likeByTag(String username, String tag) {
+        IGClient client = Serialize.deserializeUser(username);
+
+        TempUser.clear();
         int likeDelay = 3000; // 3sec
         int skipDelay = 1000; // 1sec
         int feedIterationDelay = 5000; // 5sec
@@ -57,7 +57,7 @@ public class Task {
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             try {
-                client = Serialize.deserializeUser(user);
+                client = Serialize.deserializeUser(username);
                 response = iter.next();
                 if (response.getItems() != null) {
                     response.getItems().forEach(post -> {
@@ -96,7 +96,7 @@ public class Task {
                 continue;
             }
             ;
-            client = Serialize.deserializeUser(user);
+            client = Serialize.deserializeUser(username);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
 
             Utility.likePost(client, post);
@@ -124,12 +124,14 @@ public class Task {
 
         s = taskName + "задание выполнено";
         TempUser.addTempStatusMessage(s);
+        TempUser.taskIsRunning = false;
         dispatcher.dispatch(username, new Notification(s), "status");
     }
 
 
-    public void saveByTag(User user, String username, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(user);
+    public void saveByTag(String username, String tag) {
+        IGClient client = Serialize.deserializeUser(username);
+        TempUser.clear();
 
         int saveDelay = 2000; // 2sec
         int feedIterationDelay = 5000; // 5sec
@@ -149,7 +151,7 @@ public class Task {
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             try {
-                client = Serialize.deserializeUser(user);
+                client = Serialize.deserializeUser(username);
                 response = iter.next();
                 if (response.getItems() != null) {
                     response.getItems().forEach(post -> {
@@ -176,7 +178,7 @@ public class Task {
         dispatcher.dispatch(username, new Notification(s), "status");
 
         for (TimelineMedia post : posts) {
-            client = Serialize.deserializeUser(user);
+            client = Serialize.deserializeUser(username);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
 
             Utility.savePost(client, post);
@@ -203,11 +205,13 @@ public class Task {
 
         s = taskName + "задание выполнено";
         TempUser.addTempStatusMessage(s);
+        TempUser.taskIsRunning = false;
         dispatcher.dispatch(username, new Notification(s), "status");
     }
 
-    public void likeAndSave(User user, String username, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(user);
+    public void likeAndSave(String username, String tag) {
+        IGClient client = Serialize.deserializeUser(username);
+        TempUser.clear();
 
         String taskName = "[лайк + сохранение : #" + tag + "] ";
         String l = "";
@@ -223,7 +227,7 @@ public class Task {
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             try {
-                client = Serialize.deserializeUser(user);
+                client = Serialize.deserializeUser(username);
                 response = iter.next();
                 if (response.getItems() != null) {
                     response.getItems().forEach(post -> {
@@ -250,7 +254,7 @@ public class Task {
         dispatcher.dispatch(username, new Notification(s), "status");
 
         for (TimelineMedia post : posts) {
-            client = Serialize.deserializeUser(user);
+            client = Serialize.deserializeUser(username);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
             if (!post.isHas_liked()) {
                 Utility.likePost(client, post);
@@ -294,12 +298,14 @@ public class Task {
 
         s = taskName + "задание выполнено";
         TempUser.addTempStatusMessage(s);
+        TempUser.taskIsRunning = false;
         dispatcher.dispatch(username, new Notification(s), "status");
     }
 
 
-    public void sendMediaToGroup(User user, String username, String tag) throws Exception {
-        IGClient client = Serialize.deserializeUser(user);
+    public void sendMediaToGroup(String username, String tag) {
+        IGClient client = Serialize.deserializeUser(username);
+        TempUser.clear();
 
         String taskName = "[самолет : #" + tag + "] ";
         String l = "";
@@ -316,7 +322,7 @@ public class Task {
         FeedTagResponse response = null;
         while (iter.hasNext()) {
             try {
-                client = Serialize.deserializeUser(user);
+                client = Serialize.deserializeUser(username);
                 response = iter.next();
                 if (response.getItems() != null) {
                     response.getItems().forEach(post -> {
@@ -344,7 +350,7 @@ public class Task {
 
 
         for (TimelineMedia post : posts) {
-            client = Serialize.deserializeUser(user);
+            client = Serialize.deserializeUser(username);
             String url_code = base_url + IGUtils.toCode(Long.valueOf(post.getPk()));
 
             String media_id = post.getId();
@@ -375,12 +381,13 @@ public class Task {
 
         s = taskName + "задание выполнено";
         TempUser.addTempStatusMessage(s);
+        TempUser.taskIsRunning = false;
         dispatcher.dispatch(username, new Notification(s), "status");
     }
 
 ///////////////////////////////// TEST ////////////////////////////////
 
-    public void test(User user, String username) {
+    public void test(String username) {
         TempUser.clear();
 
         String s = "задание выполняется | публикаций в обработке: 120";
@@ -449,7 +456,6 @@ public class Task {
 
         TempUser.addTempStatusMessage(s);
         dispatcher.dispatch(username, new Notification(s), "status");
-        dispatcher.dispatch(username, new Notification("false"), "running");
     }
 
     /*public void getAllFollowers() throws Exception {

@@ -2,19 +2,9 @@ spring:
   config:
     activate:
       on-profile: local
-  batch:
-    job:
-      enabled: false
-
-
 ---
 
 spring:
   config:
     activate:
       on-profile: production
-  batch:
-    job:
-      enabled: false
-server:
-  port: 8081

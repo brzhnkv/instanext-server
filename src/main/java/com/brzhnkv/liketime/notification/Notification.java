@@ -1,4 +1,4 @@
-package com.brzhnkv.liketime;
+package com.brzhnkv.liketime.notification;
 
 import java.util.HashMap;
 

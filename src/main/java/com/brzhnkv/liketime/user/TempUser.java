@@ -12,10 +12,13 @@ public class TempUser {
     public static int postsSentCount = 0;
     public static int postsDeletedCount = 0;
 
+    public static boolean taskIsRunning = false;
+
     private static List<String> tempStatusM = new ArrayList<>();
     private static List<String> tempLogM = new ArrayList<>();
 
-    public TempUser() { }
+    public TempUser() {
+    }
 
     public static void addTempStatusMessage(String m) {
         tempStatusM.add(m);
@@ -42,6 +45,7 @@ public class TempUser {
         postsSavedCount = 0;
         postsSentCount = 0;
         postsDeletedCount = 0;
+        taskIsRunning = true;
         tempStatusM.clear();
         tempLogM.clear();
     }

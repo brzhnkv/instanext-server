@@ -1,47 +1,40 @@
 package com.brzhnkv.liketime.user;
 
-import com.google.cloud.firestore.Blob;
-
 
 public class User {
-
     private String token;
     private String password;
-    private String profilePicURL;
+    private String profilePicUrl;
 
-    private Blob clientFile;
-    private Blob cookieFile;
+    public User() {}
 
-
-    public User() {
-    }
-
-    public User(String token, String password, String profilePicURL, byte[] clientFile, byte[] cookieFile) {
+    public User(String token, String password, String profilePicUrl) {
         this.token = token;
         this.password = password;
-        this.profilePicURL = profilePicURL;
-
-        this.clientFile = Blob.fromBytes(clientFile);
-        this.cookieFile = Blob.fromBytes(cookieFile);
+        this.profilePicUrl = profilePicUrl;
     }
 
     public String getToken() {
         return token;
     }
 
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public String getPassword() {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getProfilePicUrl() {
-        return profilePicURL;
+        return profilePicUrl;
     }
 
-    public byte[] getClientFile() {
-        return clientFile.toBytes();
-    }
-
-    public byte[] getCookieFile() {
-        return cookieFile.toBytes();
+    public void setProfilePicUrl(String profilePicUrl) {
+        this.profilePicUrl = profilePicUrl;
     }
 }
